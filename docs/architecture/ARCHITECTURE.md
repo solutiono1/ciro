@@ -52,7 +52,7 @@ One contract, `Ciro`, Solidity, EVM version Shanghai. Cancun opcodes are a known
 
 State:
 
-- **Payee.** `address => { nameHash, initials, display name, active }`. `nameHash` is the hash of the normalized name. Initials and length support a close match. The display name is public: the PRD requires the payer to see the registered name. That superseded an earlier line that hid the name from strangers. See DECISIONS.
+- **Payee.** `address => { nameHash, initials, display name, active }`. `nameHash` is the hash of the normalized name. Initials and length support a close match. The display name is public: the PRD requires the payer to see the registered name.
 - **Invoice.** id, payee, amount (6 decimals), reference, network id, due time, payer, paid time. Paid when paid time is set. The Solidity field is `memo`. `reference` is a reserved word and will not compile. The API and the CLI still call it reference.
 - **Allowance.** owner, spender, remaining cap, expiry, revoked. Spending the allowance pays an invoice. It does not transfer to an arbitrary address.
 

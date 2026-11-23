@@ -151,7 +151,7 @@ The landing may use photos and 3D icons because it is public marketing. The app 
 
 ## Not in v1
 
-Cards, bank cash-out, yield, payroll, a second currency balance, chat, and a team admin. Those are the products named in DECISIONS. Putting them in the navigation would be a menu of things we do not do.
+Cards, bank cash-out, yield, payroll, a second currency balance, chat, and a team admin. Those are the products this build leaves out. Putting them in the navigation would be a menu of things we do not do.
 
 ## Screens, listed
 

@@ -16,7 +16,7 @@ The API, the MCP server, and any future web host must not accept a private key, 
 
 - Anyone who knows an open invoice id can pay it with `pay`. That is the client paying the link. It is not a bug.
 - A refused name reverts and leaves no payment event.
-- The registered display name is public. See the decision dated 2026-11-21 in `docs/operations/DECISIONS.md`. Registration is the payee publishing the name they want payers to match.
+- The registered display name is public. Registration is the payee publishing the name they want payers to match.
 - The allowance path can move the spender's tUSD8 only to the payee on that payee's invoices, up to the remaining cap, until expiry. It cannot transfer to an arbitrary address.
 - Fee basis points are set at deploy and capped in the constructor. The contest deploy uses zero.
 
