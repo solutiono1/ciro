@@ -354,6 +354,9 @@ a.row:hover { background: var(--surface-inset); }
 .fact-row dt { color: var(--muted); font-size: 0.8125rem; }
 .fact-row dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .fact-row dd.mono { font-size: 0.8125rem; }
+.fact-row dd .mono { font-size: 0.8125rem; }
+.fact-row dd a { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.fineprint a { display: inline-flex; align-items: center; gap: 4px; }
 
 /* Layout: public pages. */
 .pub { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
@@ -421,6 +424,9 @@ a.row:hover { background: var(--surface-inset); }
 @media (max-width: 640px) {
   .pub-nav a[href="#how"],
   .pub-nav a[href="#faq"] { display: none; }
+  .fact-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .fact-row dd { text-align: left; }
+  .fact-row dd a { display: inline; white-space: normal; }
 }
 
 .brand {
