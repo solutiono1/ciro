@@ -39,6 +39,7 @@ export function sentence(code) {
     cap_exceeded: "That allowance is used up.",
     bad_address: "Enter a valid wallet address.",
     faucet_rate_limited: "The faucet is cooling down. Wait a minute, then try again.",
+    use_official_faucet: "tUSD8 comes from the QDay faucet, not this app.",
     not_found: "That is not available on this network.",
   };
   return copy[code] || "The request failed.";

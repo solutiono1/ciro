@@ -218,6 +218,9 @@ async function postRevoke(state, body) {
 async function postFaucet(state, body) {
   const to = requireAddress(body.address);
   const meta = await loadMeta(state);
+  // The in-app mint only works on a local test chain with a mintable token.
+  // Aevum's tUSD8 has no public mint, so the app routes to the official faucet.
+  if (state.config.chainId === 44005) throw new ApiError(409, "use_official_faucet");
   // A faucet only exists on a zero-fee (testnet) deployment. On a priced
   // deployment it returns not_found, so the mint can never touch real value.
   if (Number(meta.feeBps) !== 0) throw new ApiError(404, "not_found");
