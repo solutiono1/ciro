@@ -299,7 +299,10 @@ function appStage() {
           <span class="stage-tag">Screen recording</span>
         </div>
         <div class="stage-frame">
-          <video class="stage-video" data-demo src="/media/ciro-demo.webm" muted loop playsinline autoplay aria-hidden="true" tabindex="-1"></video>
+          <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" aria-hidden="true" tabindex="-1">
+            <source src="/media/ciro-demo.webm" type="video/webm" />
+            <source src="/media/ciro-demo.mp4" type="video/mp4" />
+          </video>
           <div class="stage-app" aria-hidden="true">
         <aside class="stage-side">
           <p class="stage-brand">Ciro</p>
@@ -495,11 +498,11 @@ export function landing() {
       <section class="section split-why" aria-labelledby="why-title">
         <div class="why-media">
           <div class="slides" data-slides aria-hidden="true">
-            <img src="/img/paperwork-desk.jpg" alt="" width="960" height="640" loading="lazy" decoding="async" />
-            <img src="/img/finance-flatlay.jpg" alt="" width="960" height="640" loading="lazy" decoding="async" />
-            <img src="/img/calculator-numbers.jpg" alt="" width="960" height="640" loading="lazy" decoding="async" />
-            <img src="/img/accounting-finance.jpg" alt="" width="960" height="640" loading="lazy" decoding="async" />
-            <img src="/img/macbook-laptop.jpg" alt="" width="960" height="640" loading="lazy" decoding="async" />
+            <img src="/img/paperwork-desk.jpg" alt="" width="960" height="640" decoding="async" />
+            <img src="/img/finance-flatlay.jpg" alt="" width="960" height="640" decoding="async" />
+            <img src="/img/calculator-numbers.jpg" alt="" width="960" height="640" decoding="async" />
+            <img src="/img/accounting-finance.jpg" alt="" width="960" height="640" decoding="async" />
+            <img src="/img/macbook-laptop.jpg" alt="" width="960" height="640" decoding="async" />
           </div>
           <div class="slides-dots" data-slides-dots aria-hidden="true"></div>
         </div>
@@ -535,8 +538,11 @@ export function bindLanding() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       video.remove();
     } else {
-      video.addEventListener("loadeddata", () => video.classList.add("is-on"));
-      video.addEventListener("error", () => video.remove(), { once: true });
+      const show = () => video.classList.add("is-on");
+      if (video.readyState >= 2) show();
+      video.addEventListener("loadeddata", show);
+      video.addEventListener("canplay", show);
+      video.addEventListener("playing", show);
     }
   }
   // The why-section photos crossfade on their own, each with a progress dot
