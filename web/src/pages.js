@@ -219,25 +219,35 @@ function frame(body, current, title) {
 
 let shellBound = false;
 
-async function runFaucet(button, statusEl) {
+async function requestTestToken(button, statusEl) {
+  // On Aevum, tUSD8 is the network's token and has no public mint. Send the
+  // user to the official QDay faucet instead of building a mint that reverts.
+  if (session.meta?.chainId === 44005) {
+    const href = faucetUrl();
+    if (href) window.open(href, "_blank", "noopener");
+    if (statusEl) statusEl.textContent = "tUSD8 comes from the QDay faucet. It opened in a new tab.";
+    return false;
+  }
   if (!session.account) {
     location.hash = "#/start";
-    return;
+    return false;
   }
-  const label = button.querySelector("span");
+  const label = button?.querySelector("span");
   const original = label ? label.textContent : "";
-  button.disabled = true;
+  if (button) button.disabled = true;
   if (label) label.textContent = "Minting 1,000 tUSD8";
   try {
     const tx = await api("POST", "/v1/tx/faucet", { address: session.account });
     await broadcast([tx]);
     if (statusEl) statusEl.textContent = "Minted 1,000 tUSD8.";
     if (label) label.textContent = "Minted 1,000 tUSD8";
+    return true;
   } catch (err) {
     if (statusEl) statusEl.textContent = err.message || "The mint failed.";
     if (label) label.textContent = "Mint failed";
+    return false;
   } finally {
-    button.disabled = false;
+    if (button) button.disabled = false;
     if (label) setTimeout(() => { label.textContent = original; }, 2400);
   }
 }
@@ -246,10 +256,10 @@ export function bindShell() {
   const more = document.querySelector("#tabs-more");
   const panel = document.querySelector("#sheet");
   document.querySelector("#side-faucet")?.addEventListener("click", (event) =>
-    runFaucet(event.currentTarget, document.querySelector("#side-faucet-status")),
+    requestTestToken(event.currentTarget, document.querySelector("#side-faucet-status")),
   );
   document.querySelector("#sheet-faucet")?.addEventListener("click", (event) =>
-    runFaucet(event.currentTarget, null),
+    requestTestToken(event.currentTarget, null),
   );
   if (!more || !panel) return;
   const setOpen = (open) => {
@@ -684,7 +694,7 @@ ciro receipt 4</pre>
               <button class="btn btn-primary" type="button" id="docs-faucet">${icon("droplet", "ic-16")}Get 1,000 tUSD8</button>
             </div>
             <p id="docs-status" class="fineprint" role="status"></p>
-            <p class="fineprint">The faucet calls the test token's public mint. It is for testnet only.</p>
+            <p class="fineprint">On Aevum, tUSD8 comes from the QDay faucet, which opens in a new tab. On a local test chain the app mints it. It is for testnet only.</p>
           </section>
         </div>
       </div>
@@ -709,17 +719,17 @@ export function bindDocs() {
       if (status) status.textContent = err.message || "The wallet refused the network.";
     }
   });
-  document.querySelector("#docs-faucet")?.addEventListener("click", async () => {
-    if (status) status.textContent = "Preparing the mint.";
-    try {
-      if (!session.account) await connect();
-      const tx = await api("POST", "/v1/tx/faucet", { address: session.account });
-      if (status) status.textContent = tx.summary;
-      await broadcast([tx]);
-      if (status) status.textContent = "Minted 1,000 tUSD8 to this wallet.";
-    } catch (err) {
-      if (status) status.textContent = err.message || "The mint failed.";
+  document.querySelector("#docs-faucet")?.addEventListener("click", async (event) => {
+    if (session.meta?.chainId !== 44005 && !session.account) {
+      try {
+        await connect();
+      } catch (err) {
+        if (status) status.textContent = err.message || "The wallet did not connect.";
+        return;
+      }
     }
+    const ok = await requestTestToken(event.currentTarget, status);
+    if (ok && status) status.textContent = "Minted 1,000 tUSD8 to this wallet.";
   });
 }
 
@@ -1116,16 +1126,8 @@ async function refreshPay(id, name) {
   });
   document.querySelector("#do-pay")?.addEventListener("click", () => submitPay(id, name, invoice));
   document.querySelector("#do-faucet")?.addEventListener("click", async (event) => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    button.textContent = "Minting 1,000 tUSD8";
-    try {
-      const tx = await api("POST", "/v1/tx/faucet", { address: session.account });
-      await broadcast([tx]);
-      await refreshPay(id, name);
-    } catch (err) {
-      action.innerHTML = `<p class="bad">${esc(err.message)}</p>`;
-    }
+    const ok = await requestTestToken(event.currentTarget, action);
+    if (ok) await refreshPay(id, name);
   });
 }
 
