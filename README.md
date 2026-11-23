@@ -65,7 +65,29 @@ The receipt is the record. It carries the amount, the payer, the payee name, the
 
 ## Build on it
 
-The API, CLI, and MCP are built and wired. The SDK comes after the routes freeze. Every write returns an unsigned transaction; the caller signs.
+The API, CLI, MCP, and SDK are built and wired. Every write returns an unsigned transaction; the caller signs.
+
+```bash
+npm i @getciro/sdk
+npm i -g @getciro/cli
+npx @getciro/mcp
+```
+
+```js
+import { createClient } from "@getciro/sdk";
+
+const ciro = createClient({ apiUrl: "https://ciro-api-production.up.railway.app" });
+const invoice = await ciro.invoice(1);
+const tx = await ciro.preparePay(1, "Ada Okonkwo"); // unsigned; you sign it
+```
+
+Published packages:
+
+| Package | What it is |
+|---|---|
+| [`@getciro/sdk`](https://www.npmjs.com/package/@getciro/sdk) | Typed client of the API. No wallet. |
+| [`@getciro/cli`](https://www.npmjs.com/package/@getciro/cli) | The `ciro` terminal tool. Signs locally with your key file. |
+| [`@getciro/mcp`](https://www.npmjs.com/package/@getciro/mcp) | MCP server for agents. Prepares payments; never signs. |
 
 <div align="center">
 <img src="docs/screens/docs.png" width="880" alt="Ciro docs - API, CLI, MCP, contract, and network" />
@@ -78,6 +100,7 @@ The API, CLI, and MCP are built and wired. The SDK comes after the routes freeze
 | `contracts/` | `Ciro` (Solidity, Shanghai) holds payees, invoices, and allowances. `MockUSD8` is a local test token. |
 | `packages/api` | HTTP API over `/v1`. Reads the chain and returns unsigned transactions. Holds no key. |
 | `packages/cli` | The `ciro` binary. Signs locally with a key file and refuses a close name before it signs. |
+| `packages/sdk` | `@getciro/sdk`, the typed client of the API. No wallet. |
 | `packages/mcp` | An MCP server. Prepares payments; never signs. |
 | `web/` | The web app. Vite and vanilla JS, built on the Maren Finance design system. |
 | `packages/shared` | Name folding and money formatting, shared by the API and the tests. |
@@ -108,6 +131,8 @@ Writes return `{ chainId, to, data, value, summary }` for the caller to sign. Er
 
 ## CLI
 
+Install with `npm i -g @getciro/cli` (or run `npx @getciro/cli`).
+
 ```bash
 ciro register "Ada Okonkwo"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
@@ -123,8 +148,10 @@ Config lives at `~/.ciro/config.json` or the path in `CIRO_CONFIG`. The key file
 The MCP server exposes the same reads and prepares a payment. It does not sign.
 
 ```bash
-CIRO_API_URL=http://127.0.0.1:8787 node packages/mcp/bin/ciro-mcp.js
+CIRO_API_URL=http://127.0.0.1:8787 npx @getciro/mcp
 ```
+
+From the repo, the same server is `node packages/mcp/bin/ciro-mcp.js`.
 
 Tools: `ciro_check`, `ciro_prepare_invoice`, `ciro_prepare_pay`, `ciro_receipt`. A close or unknown name returns no transaction.
 
