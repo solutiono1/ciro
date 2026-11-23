@@ -633,7 +633,7 @@ export function docsPage() {
       <header class="docs-head">
         <p class="bracket">[ Documentation ]</p>
         <h1 class="h1">Build on Ciro</h1>
-        <p class="lede">One contract, one HTTP API, a CLI, and an MCP server. The API reads the chain and returns unsigned transactions. It holds no key.</p>
+        <p class="lede">One contract, one HTTP API, a CLI, an MCP server, and a typed SDK. The API reads the chain and returns unsigned transactions. It holds no key.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#/start">Open the app ${arrow()}</a>
           <a class="btn" href="${esc(apiUrl())}/v1/meta" rel="noopener">API status ${icon("external", "ic-16")}</a>
@@ -647,6 +647,7 @@ export function docsPage() {
             <button type="button" data-doc="api">API</button>
             <button type="button" data-doc="cli">CLI</button>
             <button type="button" data-doc="mcp">MCP</button>
+            <button type="button" data-doc="sdk">SDK</button>
             <button type="button" data-doc="contract">Contract</button>
             <button type="button" data-doc="network">Network</button>
           </nav>
@@ -686,8 +687,9 @@ export function docsPage() {
           </section>
           <section class="docs-section" id="doc-cli">
             <h2 class="h2">CLI</h2>
-            <p>The CLI talks to the same API and prints the transaction for a wallet to sign.</p>
-            <pre>ciro register "Ada Okonkwo"
+            <p>The CLI talks to the same API and prints the transaction for a wallet to sign. It signs locally with a key file you own.</p>
+            <pre>npm i -g @getciro/cli
+ciro register "Ada Okonkwo"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
 ciro pay 4 --name "Ada Okonkwo"
 ciro receipt 4</pre>
@@ -695,7 +697,16 @@ ciro receipt 4</pre>
           <section class="docs-section" id="doc-mcp">
             <h2 class="h2">MCP</h2>
             <p>The MCP server exposes the same reads and prepares a payment. It does not sign.</p>
-            <pre>CIRO_API_URL=${esc(apiUrl())} node packages/mcp/bin/ciro-mcp.js</pre>
+            <pre>CIRO_API_URL=${esc(apiUrl())} npx @getciro/mcp</pre>
+          </section>
+          <section class="docs-section" id="doc-sdk">
+            <h2 class="h2">SDK</h2>
+            <p>A typed client of this API. It holds no wallet; the caller signs.</p>
+            <pre>npm i @getciro/sdk</pre>
+            <pre>import { createClient } from "@getciro/sdk";
+const ciro = createClient({ apiUrl: "${esc(apiUrl())}" });
+const invoice = await ciro.invoice(1);
+const tx = await ciro.preparePay(1, "Ada Okonkwo");</pre>
           </section>
           <section class="docs-section" id="doc-contract">
             <h2 class="h2">Contract</h2>
