@@ -10,7 +10,7 @@
     "web"
   ],
   "scripts": {
-    "test": "node --test packages/shared/test && npm test -w @ciro/api && npm test -w @ciro/cli && npm test -w @ciro/mcp && npm test -w @ciro/sdk && npm test -w @ciro/web"
+    "test": "node --test packages/shared/test && npm test -w @getciro/api && npm test -w @getciro/cli && npm test -w @getciro/mcp && npm test -w @getciro/sdk && npm test -w @getciro/web"
   },
   "engines": {
     "node": ">=22"

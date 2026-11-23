@@ -1,5 +1,5 @@
 {
-  "name": "@ciro/cli",
+  "name": "@getciro/cli",
   "version": "0.1.0",
   "description": "The ciro CLI: register a name, create an invoice, check a name, pay, and read a receipt. It signs locally with a key file you own.",
   "license": "MIT",

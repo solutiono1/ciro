@@ -139,15 +139,15 @@ npm test
 Run the web app and API locally:
 
 ```bash
-npm run dev -w @ciro/web       # web app on Vite
-npm start -w @ciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CHAIN_ID
+npm run dev -w @getciro/web       # web app on Vite
+npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CHAIN_ID
 ```
 
 ## Tests
 
 - `cd contracts && forge test` - 11 passed.
 - `npm test` - shared, API, CLI, MCP, and web unit tests.
-- `npm run e2e -w @ciro/web` - the pay flow and the public pages. A close name has no pay button; an exact name pays.
+- `npm run e2e -w @getciro/web` - the pay flow and the public pages. A close name has no pay button; an exact name pays.
 
 ## On-chain proof
 
