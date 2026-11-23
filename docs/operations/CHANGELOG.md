@@ -1,6 +1,13 @@
 # Changelog
 
-## 2026-11-23 — Landing unslop pass
+## 2026-11-23 - Deployment, landing, and public docs
+
+- Deployed Ciro to QDay Aevum testnet (chain 44005) at `0x4AceB37ecAce160B4363111460020c2d088C529C`, settling in tUSD8 with a zero fee. The README links the deploy, an exact pay, and a refused name on the explorer.
+- The landing hero is centered, with the app preview (a real screen recording) below on a framed backdrop, and a five-photo slideshow with progress dots.
+- The in-app faucet routes to the official QDay faucet on Aevum; on a local test chain it still mints.
+- Moved internal operations docs (handoff, status, decisions, research, roadmap, hackathon, tasks) to a private repo. The public tree keeps the README and the judge-facing docs.
+
+## 2026-11-23 - Landing unslop pass
 
 - The landing hero is now the split UX.md asks for: copy and two actions on the left, a live name-check card on the right. The card types "Ada Okonkwo", shows exact, close, or none with the same fold rule the API uses, and reveals the pay button only on exact. `e2e/public.test.js` now asserts that a capital and a double space still pay and that another name does not.
 - Removed the violet-to-teal radial wallpaper, the noise overlay, and the large colored shadow behind the app preview. The preview sits on the quiet rail panel with a hairline.
