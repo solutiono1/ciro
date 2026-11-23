@@ -1,0 +1,14 @@
+node_modules/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+web/dist/
+web/test-results/
+web/playwright-report/
+.env
+.env.*
+*.key
+*.pem
+
+# Local dev artifacts
+.ciro-record/
