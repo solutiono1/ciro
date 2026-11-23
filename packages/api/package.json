@@ -1,5 +1,5 @@
 {
-  "name": "@ciro/api",
+  "name": "@getciro/api",
   "version": "0.1.0",
   "description": "The Ciro HTTP API: reads the chain and returns unsigned transactions. It holds no key.",
   "license": "MIT",

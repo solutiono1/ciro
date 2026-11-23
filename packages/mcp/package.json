@@ -1,5 +1,5 @@
 {
-  "name": "@ciro/mcp",
+  "name": "@getciro/mcp",
   "version": "0.1.0",
   "description": "The Ciro MCP server: reads invoices and prepares payments for an agent. It never signs and never holds a key.",
   "license": "MIT",

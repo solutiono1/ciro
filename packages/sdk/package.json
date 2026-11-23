@@ -1,5 +1,5 @@
 {
-  "name": "@ciro/sdk",
+  "name": "@getciro/sdk",
   "version": "0.1.0",
   "description": "Typed client for the Ciro invoice API. Reads are public; writes return unsigned transactions the caller signs.",
   "license": "MIT",
