@@ -4,7 +4,7 @@ Four surfaces. Two of them ship in the contest build. Two wait.
 
 ## Order
 
-The owner changed this sequence on 2026-11-21. The earlier draft put the web app first. The build that exists is the backend first. See DECISIONS.
+The build order is fixed: the backend first, then the web app.
 
 | Order | Surface | State |
 |---|---|---|
@@ -27,7 +27,7 @@ Public:
 - `GET /v1/receipts/:id` — 404 `not_paid` until the invoice is paid. The body then includes `transactionHash` from the `Paid` log when that log is found.
 - `POST /v1/check` `{ "payee": "0x…", "name": "Ada Okonkwo" }` → `{ "result": "exact" | "close" | "none" }` against the payee's current registration.
 - `POST /v1/invoices/:id/check` `{ "name": "Ada Okonkwo" }` against the snapshot locked on that invoice. `pay` uses the snapshot. This route exists so a client can refuse the right name.
-- `GET /v1/payees/:address` → `{ "address", "registered", "name" }`. The name is public. See DECISIONS.
+- `GET /v1/payees/:address` → `{ "address", "registered", "name" }`. The name is public by design.
 - `GET /v1/payees/:address/invoices` — at most 100 invoices, with `truncated` if there are more.
 
 Prepare, unsigned:
