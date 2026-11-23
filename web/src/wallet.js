@@ -1,0 +1,159 @@
+import { decodeEventLog, encodeFunctionData, getAddress, parseAbiItem } from "viem";
+import { chainName, networkParams, rpcUrl, session } from "./session.js";
+
+const created = parseAbiItem(
+  "event InvoiceCreated(uint256 indexed id, address indexed payee, uint256 amount, uint64 due, string memo)",
+);
+const balanceOf = parseAbiItem("function balanceOf(address) view returns (uint256)");
+
+export function provider() {
+  return window.ethereum ?? null;
+}
+
+export async function refreshWallet() {
+  const ethereum = provider();
+  if (!ethereum) {
+    session.account = null;
+    session.chainId = null;
+    return;
+  }
+  const accounts = await ethereum.request({ method: "eth_accounts" });
+  session.account = accounts[0] ? getAddress(accounts[0]) : null;
+  if (!session.account) {
+    session.chainId = null;
+    return;
+  }
+  session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+}
+
+export async function connect() {
+  const ethereum = provider();
+  if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
+  const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+  if (!accounts[0]) throw new Error("The wallet did not share an account.");
+  session.account = getAddress(accounts[0]);
+  session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+  if (!ethereum.__ciroListening) {
+    ethereum.__ciroListening = true;
+    ethereum.on?.("accountsChanged", () => {
+      refreshWallet().then(() => window.dispatchEvent(new Event("hashchange")));
+    });
+    ethereum.on?.("chainChanged", () => location.reload());
+  }
+}
+
+export async function disconnect() {
+  session.account = null;
+  session.chainId = null;
+  session.payee = null;
+  try {
+    await provider()?.request({
+      method: "wallet_revokePermissions",
+      params: [{ eth_accounts: {} }],
+    });
+  } catch {
+    // Some wallets have no revoke. The page still forgets the account.
+  }
+}
+
+// Adds the Ciro network to the wallet without switching. Wallets that already
+// know the chain return an error, which the caller can ignore.
+export async function addNetwork() {
+  const ethereum = provider();
+  if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
+  const params = networkParams();
+  await ethereum.request({ method: "wallet_addEthereumChain", params: [params] });
+  session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+}
+
+export async function switchTo(chainId) {
+  const hex = `0x${chainId.toString(16)}`;
+  const ethereum = provider();
+  if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
+  try {
+    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
+  } catch (err) {
+    if (err?.code !== 4902) throw err;
+    // The wallet does not know this chain yet. Adding it does not always
+    // switch, so ask again once the chain is known.
+    await addNetwork();
+    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
+  }
+  session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+}
+
+async function rpc(method, params) {
+  const url = rpcUrl();
+  if (!url) throw new Error("Set the chain RPC on the Developers screen.");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const json = await response.json();
+  if (json.error) throw new Error(json.error.message || "The chain did not answer.");
+  return json.result;
+}
+
+export async function nativeBalance(account) {
+  const raw = await rpc("eth_getBalance", [account, "latest"]);
+  return BigInt(raw);
+}
+
+export async function tokenBalance(token, account) {
+  const data = encodeFunctionData({ abi: [balanceOf], functionName: "balanceOf", args: [account] });
+  const raw = await rpc("eth_call", [{ to: token, data }, "latest"]);
+  return BigInt(raw);
+}
+
+export async function broadcast(steps) {
+  const ethereum = provider();
+  if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
+  if (!session.account) throw new Error("Connect a wallet first.");
+  const receipts = [];
+  for (const step of steps) {
+    // A wallet on another chain will quote that chain's gas, often ETH on
+    // Ethereum. Move it to the Ciro chain before the signature prompt.
+    if (step.chainId && session.chainId !== step.chainId) {
+      await switchTo(step.chainId);
+      if (session.chainId !== step.chainId) {
+        throw new Error(`The wallet is on ${chainName(session.chainId)}. Switch to ${chainName(step.chainId)} and try again.`);
+      }
+    }
+    const params = {
+      from: session.account,
+      to: step.to,
+      data: step.data,
+      value: "0x0",
+    };
+    if (step.chainId) params.chainId = `0x${Number(step.chainId).toString(16)}`;
+    const hash = await ethereum.request({ method: "eth_sendTransaction", params: [params] });
+    receipts.push(await waitReceipt(hash));
+  }
+  return receipts;
+}
+
+async function waitReceipt(hash) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const receipt = await rpc("eth_getTransactionReceipt", [hash]);
+    if (receipt) {
+      if (receipt.status === "0x0") throw new Error("The transaction reverted.");
+      receipt.transactionHash = hash;
+      return receipt;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error("The transaction was not mined.");
+}
+
+export function createdId(receipt) {
+  for (const log of receipt.logs ?? []) {
+    try {
+      const decoded = decodeEventLog({ abi: [created], data: log.data, topics: log.topics });
+      if (decoded.eventName === "InvoiceCreated") return decoded.args.id.toString();
+    } catch {
+      // Not this event.
+    }
+  }
+  return null;
+}

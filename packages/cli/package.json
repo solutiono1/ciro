@@ -1,0 +1,15 @@
+{
+  "name": "@ciro/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ciro": "./bin/ciro.js"
+  },
+  "scripts": {
+    "test": "node --test --test-timeout 120000"
+  },
+  "dependencies": {
+    "viem": "^2.38.0"
+  }
+}
