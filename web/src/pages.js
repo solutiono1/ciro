@@ -1492,23 +1492,29 @@ export function developersPage(apiBase, rpc) {
       <a class="btn" href="#/docs">Full docs ${arrow()}</a>
     </div>
     <p id="dev-status" class="fineprint" role="status"></p>
-    <p class="lede mt-24">The API, CLI, and MCP are built and wired in v1. The SDK comes after the routes freeze.</p>
+    <p class="lede mt-24">The API, CLI, MCP, and SDK are built and published. Every write returns an unsigned transaction for you to sign.</p>
     <h2 class="h2 section-title">API</h2>
     <p class="muted">The live base URL for this deployment. Reads are public; writes return an unsigned transaction.</p>
     <pre>${esc(apiBase)}</pre>
     <h2 class="h2 section-title">CLI</h2>
     <p class="muted">The <code>ciro</code> binary signs locally with a key file you own. It never sends the key to the server.</p>
-    <pre>ciro register "Ada Okonkwo"
+    <pre>npm i -g @getciro/cli
+ciro register "Ada Okonkwo"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
 ciro pay 4 --name "Ada Okonkwo"
 ciro receipt 4</pre>
     <h2 class="h2 section-title">MCP</h2>
     <p class="muted">An agent runs this server to prepare a payment without holding the treasury. It does not sign.</p>
-    <pre>CIRO_API_URL=${esc(apiBase)} node packages/mcp/bin/ciro-mcp.js</pre>
+    <pre>CIRO_API_URL=${esc(apiBase)} npx @getciro/mcp</pre>
     <h2 class="h2 section-title">SDK</h2>
-    <div class="card card-pad coming-soon">
-      <p class="bracket">[ Coming soon ]</p>
-      <p class="lede">A typed client of this API. It ships after the routes freeze, so it does not chase a moving target. It holds no wallet; the caller signs.</p>
+    <div class="card card-pad">
+      <p class="bracket">[ Published ]</p>
+      <p class="lede">A typed client of this API. It holds no wallet; the caller signs.</p>
+      <pre>npm i @getciro/sdk</pre>
+      <pre>import { createClient } from "@getciro/sdk";
+const ciro = createClient({ apiUrl: "${esc(apiBase)}" });
+const invoice = await ciro.invoice(1);</pre>
+      <p class="fineprint"><a href="https://www.npmjs.com/package/@getciro/sdk" rel="noopener">@getciro/sdk on npm ${icon("external", "ic-16")}</a></p>
     </div>
     <form id="endpoints" class="card form mt-24">
       <div class="form-body">
