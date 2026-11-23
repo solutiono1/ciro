@@ -225,7 +225,7 @@ async function requestTestToken(button, statusEl) {
   if (session.meta?.chainId === 44005) {
     const href = faucetUrl();
     if (href) window.open(href, "_blank", "noopener");
-    if (statusEl) statusEl.textContent = "tUSD8 comes from the QDay faucet. It opened in a new tab.";
+    if (statusEl) statusEl.textContent = "tUSD8 comes from the QDay faucet. It opened in a new tab. If it says not eligible, use the QDay Discord #faucet channel.";
     return false;
   }
   if (!session.account) {
@@ -694,7 +694,7 @@ ciro receipt 4</pre>
               <button class="btn btn-primary" type="button" id="docs-faucet">${icon("droplet", "ic-16")}Get 1,000 tUSD8</button>
             </div>
             <p id="docs-status" class="fineprint" role="status"></p>
-            <p class="fineprint">On Aevum, tUSD8 comes from the QDay faucet, which opens in a new tab. On a local test chain the app mints it. It is for testnet only.</p>
+            <p class="fineprint">On Aevum, tUSD8 comes from the QDay faucet, which opens in a new tab. If it says not eligible, use the QDay Discord #faucet channel. On a local test chain the app mints it. It is for testnet only.</p>
           </section>
         </div>
       </div>
