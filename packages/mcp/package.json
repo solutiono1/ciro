@@ -1,0 +1,12 @@
+{
+  "name": "@ciro/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ciro-mcp": "./bin/ciro-mcp.js"
+  },
+  "scripts": {
+    "test": "node --test --test-timeout 120000"
+  }
+}
