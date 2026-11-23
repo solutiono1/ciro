@@ -1473,11 +1473,8 @@ export function developersPage(apiBase, rpc) {
   const link = (value, href) => value && href
     ? `<a class="mono" href="${esc(href)}" rel="noopener">${esc(value)} ${icon("external", "ic-16")}</a>`
     : `<span class="mono">${esc(value || "Not loaded")}</span>`;
-  return frame(`
-    <div class="page-head">
-      <p class="bracket">[ Developers ]</p>
-      <p class="lede">Reads of an invoice are public. There is no API key. Writes return an unsigned transaction. This page does not hold a key.</p>
-    </div>
+  const intro = "Reads of an invoice are public. There is no API key. Writes return an unsigned transaction. This page does not hold a key.";
+  const sections = `
     <h2 class="h2 section-title">Deployment</h2>
     <div class="card card-pad">
       <dl class="facts">
@@ -1522,8 +1519,27 @@ const invoice = await ciro.invoice(1);</pre>
         <div class="field"><label class="label" for="rpc-url">Chain RPC</label><input id="rpc-url" value="${esc(rpc)}" /></div>
       </div>
       <div class="form-foot"><button class="btn btn-primary" type="submit">Save ${arrow()}</button></div>
-    </form>
-  `, "/developers");
+    </form>`;
+  if (session.account) {
+    return frame(`
+      <div class="page-head">
+        <p class="bracket">[ Developers ]</p>
+        <p class="lede">${esc(intro)}</p>
+      </div>
+      ${sections}
+    `, "/developers");
+  }
+  return publicShell(`
+    <main class="container docs pub-main">
+      <header class="docs-head">
+        <p class="bracket">[ Developers ]</p>
+        <h1 class="h1">Build on Ciro</h1>
+        <p class="lede">${esc(intro)}</p>
+      </header>
+      ${sections}
+    </main>
+    ${footer()}
+  `, true);
 }
 
 export function bindDevelopers(go) {

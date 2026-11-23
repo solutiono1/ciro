@@ -71,6 +71,13 @@ async function go() {
       bindDocs();
       return;
     }
+    if (path === "/developers") {
+      await ensureMeta().catch(() => {});
+      if (mine !== ticket) return;
+      draw(developersPage(apiUrl(), rpcUrl()));
+      bindDevelopers(go);
+      return;
+    }
     if (parts[0] !== undefined && path !== "/") await ensureMeta();
     if (mine !== ticket) return;
     if (path === "how" || path === "faq") {
@@ -152,11 +159,6 @@ async function go() {
     if (path === "/settings") {
       draw(await settingsPage());
       bindSettings(go);
-      return;
-    }
-    if (path === "/developers") {
-      draw(developersPage(apiUrl(), rpcUrl()));
-      bindDevelopers(go);
       return;
     }
     draw(landing());
