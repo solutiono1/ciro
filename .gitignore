@@ -14,3 +14,8 @@ web/playwright-report/
 
 # Local dev artifacts
 .ciro-record/
+
+# npm publish token (never commit)
+.npm-token
+.npm-token.*
+.npmrc
