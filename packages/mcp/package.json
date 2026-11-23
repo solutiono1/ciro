@@ -1,10 +1,35 @@
 {
   "name": "@ciro/mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "The Ciro MCP server: reads invoices and prepares payments for an agent. It never signs and never holds a key.",
+  "license": "MIT",
+  "author": "Solution Kanu",
+  "homepage": "https://github.com/solutiono1/ciro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solutiono1/ciro.git",
+    "directory": "packages/mcp"
+  },
+  "keywords": [
+    "ciro",
+    "invoice",
+    "mcp",
+    "agent",
+    "tusd8"
+  ],
   "type": "module",
   "bin": {
     "ciro-mcp": "./bin/ciro-mcp.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test --test-timeout 120000"

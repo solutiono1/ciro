@@ -1,8 +1,32 @@
 {
   "name": "@ciro/api",
   "version": "0.1.0",
-  "private": true,
+  "description": "The Ciro HTTP API: reads the chain and returns unsigned transactions. It holds no key.",
+  "license": "MIT",
+  "author": "Solution Kanu",
+  "homepage": "https://github.com/solutiono1/ciro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solutiono1/ciro.git",
+    "directory": "packages/api"
+  },
+  "keywords": [
+    "ciro",
+    "invoice",
+    "stablecoin",
+    "api",
+    "tusd8"
+  ],
   "type": "module",
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test --test-timeout 120000"
