@@ -17,7 +17,7 @@
 
 - Public pages: the landing now has the asymmetric hero split (name-check card on the right), the app-preview placeholder, the three steps with Fluent 3D icons, the why-split with a photo, the FAQ, the docs teaser, and the invoice lookup. `#/docs` is the new public docs page: API, CLI, MCP, contract addresses, network, add-network and faucet actions.
 - Motion: one easing curve, hover lifts, link underlines, fades on navigation. No loops except the text caret. `prefers-reduced-motion` renders the final state.
-- New walk between the wallet and the chain: the web app asks the wallet to switch to the Ciro chain before signing, and adds the chain first if the wallet says 4902. Every signed transaction carries the chain id. A wallet on mainnet now gets Aevum gas quotes instead of mainnet ones. See HANDOFF.md.
+- New walk between the wallet and the chain: the web app asks the wallet to switch to the Ciro chain before signing, and adds the chain first if the wallet says 4902. Every signed transaction carries the chain id. A wallet on mainnet now gets Aevum gas quotes instead of mainnet ones.
 - The pay screen offers the test faucet (1,000 tUSD8) when the wallet lacks the token.
 - Fonts: General Sans (Fontshare, free) is now the loaded face, self-hosted in `web/public/fonts/`, standing in for Neue Montreal until the licensed files arrive. The exact target file names stay documented in `docs/design/UX.md`.
 - Screen recording: the landing preview is video-ready. `node scripts/record-demo.mjs` records a real click-through on a local fixture to `web/public/media/ciro-demo.webm`, which auto-plays over the drawn preview. Reduced-motion keeps the still preview.
@@ -36,7 +36,7 @@
 
 - Renamed the product from Chirograph to Ciro. Chiro was rejected because it collides with chiropractic.
 - Reorganized documentation under `docs/product`, `docs/design`, `docs/architecture`, `docs/security`, `docs/development`, and `docs/operations`.
-- Added `AGENTS.md`, the documentation index, status, handoff, changelog, tasks, and a threat model.
+- Added the documentation index, changelog, and threat model.
 - The sentence above was true when the docs were first reorganized. The backend landed later the same day. See the entry below.
 
 ## 2026-11-21 — Backend
