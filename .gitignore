@@ -9,6 +9,8 @@ web/playwright-report/
 .env.*
 *.key
 *.pem
+.deploy-key
+.deploy-key.*
 
 # Local dev artifacts
 .ciro-record/
