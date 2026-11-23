@@ -460,6 +460,7 @@ export function landing() {
     <main class="container landing pub-main">
       <section class="hero">
         <div class="hero-copy">
+          <p class="bracket">[ Aevum testnet ]</p>
           <h1 class="display">An invoice that will not pay the wrong name.</h1>
           <p class="lede">The payer types the name they were told. The amount is locked, and it only moves when the name matches.</p>
           <div class="hero-actions">
@@ -517,9 +518,29 @@ export function landing() {
           </dl>
         </div>
       </section>
+      <section class="section" id="status" aria-labelledby="status-title">
+        <div class="section-head">
+          <p class="bracket">[ Status ]</p>
+          <h2 class="h2" id="status-title">Where things stand.</h2>
+        </div>
+        <dl class="card status-grid">
+          <div><dt class="h3">Non-custodial</dt><dd>Your wallet signs. Ciro holds no key and no funds.</dd></div>
+          <div><dt class="h3">Exact name</dt><dd>The contract pays only the name registered on the invoice.</dd></div>
+          <div><dt class="h3">Exact amount</dt><dd>The invoice locks the amount, and the payer cannot change it.</dd></div>
+          <div><dt class="h3">Testnet</dt><dd>tUSD8 on Aevum testnet, fee zero. No real money moves.</dd></div>
+        </dl>
+      </section>
       ${faq()}
       ${docsTeaser()}
       ${lookup()}
+      <section class="section" aria-labelledby="closing-title">
+        <div class="card closing-card">
+          <p class="bracket">[ Testnet ]</p>
+          <h2 class="h1" id="closing-title">Try the full loop on Aevum testnet.</h2>
+          <p class="lede">Register a name, send an invoice, and pay it with testnet tUSD8.</p>
+          <div class="actions"><a class="btn btn-primary btn-lg" href="#/start"><span>Open the app</span>${arrow()}</a></div>
+        </div>
+      </section>
     </main>
     ${footer()}
   `, true);
