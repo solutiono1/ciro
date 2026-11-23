@@ -1,10 +1,35 @@
 {
   "name": "@ciro/cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "The ciro CLI: register a name, create an invoice, check a name, pay, and read a receipt. It signs locally with a key file you own.",
+  "license": "MIT",
+  "author": "Solution Kanu",
+  "homepage": "https://github.com/solutiono1/ciro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solutiono1/ciro.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "ciro",
+    "invoice",
+    "stablecoin",
+    "cli",
+    "tusd8"
+  ],
   "type": "module",
   "bin": {
     "ciro": "./bin/ciro.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test --test-timeout 120000"

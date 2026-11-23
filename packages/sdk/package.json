@@ -1,7 +1,23 @@
 {
   "name": "@ciro/sdk",
   "version": "0.1.0",
-  "private": true,
+  "description": "Typed client for the Ciro invoice API. Reads are public; writes return unsigned transactions the caller signs.",
+  "license": "MIT",
+  "author": "Solution Kanu",
+  "homepage": "https://github.com/solutiono1/ciro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solutiono1/ciro.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "ciro",
+    "invoice",
+    "stablecoin",
+    "tusd8",
+    "aeuvm",
+    "payments"
+  ],
   "type": "module",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -10,6 +26,15 @@
       "types": "./src/index.d.ts",
       "default": "./src/index.js"
     }
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test --test-timeout 120000"
