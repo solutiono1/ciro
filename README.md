@@ -65,7 +65,7 @@ The receipt is the record. It carries the amount, the payer, the payee name, the
 
 ## Build on it
 
-The API, CLI, MCP, and SDK are built and wired. Every write returns an unsigned transaction; the caller signs.
+The API, CLI, MCP, and SDK are built and published. Every write returns an unsigned transaction; the caller signs.
 
 ```bash
 npm i @getciro/sdk
@@ -89,8 +89,10 @@ Published packages:
 | [`@getciro/cli`](https://www.npmjs.com/package/@getciro/cli) | The `ciro` terminal tool. Signs locally with your key file. |
 | [`@getciro/mcp`](https://www.npmjs.com/package/@getciro/mcp) | MCP server for agents. Prepares payments; never signs. |
 
+The live API URL, the two contract addresses, and every package command are on the [developers page](https://ciro-a9s.pages.dev/#/developers). It reads without a wallet.
+
 <div align="center">
-<img src="docs/screens/docs.png" width="880" alt="Ciro docs - API, CLI, MCP, contract, and network" />
+<img src="docs/screens/docs.png" width="880" alt="Ciro docs - API, CLI, MCP, SDK, contract, and network" />
 </div>
 
 ## Architecture
