@@ -142,6 +142,10 @@ export async function main(argv, options = {}) {
   const stderr = options.stderr ?? process.stderr;
   const stdin = options.stdin ?? process.stdin;
   try {
+    if (argv.includes("--help") || argv.includes("-h")) {
+      stderr.write(`${USAGE}\n`);
+      return 0;
+    }
     const parsed = parseArgs(argv);
     const command = parsed.positional[0];
     if (!command || command === "help") {
