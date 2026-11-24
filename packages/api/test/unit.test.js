@@ -11,6 +11,6 @@ test("pay summary matches the documented shape", () => {
 test("approval resets a non-zero allowance before setting the exact amount", () => {
   assert.deepEqual(approvalAmounts(0n, 1_000_000n), [1_000_000n]);
   assert.deepEqual(approvalAmounts(1_000_000n, 1_000_000n), []);
-  assert.deepEqual(approvalAmounts(2_000_000n, 1_000_000n), []);
+  assert.deepEqual(approvalAmounts(2_000_000n, 1_000_000n), [0n, 1_000_000n]);
   assert.deepEqual(approvalAmounts(1n, 1_000_000n), [0n, 1_000_000n]);
 });

@@ -28,7 +28,7 @@ import {
   startPage,
   walletPage,
 } from "./pages.js";
-import { apiUrl, rpcUrl, session } from "./session.js";
+import { aevumDeployment, apiUrl, rpcUrl, session } from "./session.js";
 import { refreshWallet } from "./wallet.js";
 
 const app = document.querySelector("#app");
@@ -46,7 +46,19 @@ let ticket = 0;
 
 async function ensureMeta() {
   if (session.meta) return;
-  session.meta = await api("GET", "/v1/meta");
+  const meta = await api("GET", "/v1/meta");
+  if (import.meta.env.PROD && Number(meta.chainId) !== 44005) {
+    throw new Error("This build only supports Aevum testnet.");
+  }
+  const pinned = aevumDeployment(meta.chainId);
+  if (pinned) {
+    const contract = String(meta.contract || "").toLowerCase();
+    const token = String(meta.token || "").toLowerCase();
+    if (contract !== pinned.contract || token !== pinned.token) {
+      throw new Error("The API does not match the deployed Ciro contract.");
+    }
+  }
+  session.meta = meta;
 }
 
 async function go() {

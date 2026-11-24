@@ -109,7 +109,51 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   assert.equal(res.json.transactionHash, paid.transactionHash);
   assert.equal(res.json.payeeName, "Ada Okonkwo");
   assert.equal(res.json.fee, "0");
+  assert.equal(res.json.net, "1000000");
+  assert.equal(res.json.netDisplay, "1.000000");
   assert.equal(res.json.payer, payerAddress);
+
+  res = await fx.api("GET", `/v1/payers/${payerAddress}/receipts`);
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  assert.equal(res.json.receipts.length, 1);
+  assert.equal(res.json.receipts[0].id, "1");
+  assert.equal(res.json.receipts[0].net, "1000000");
+
+  res = await fx.api("POST", "/v1/tx/invoice", {
+    amount: "1",
+    reference: "x",
+    due: "18446744073709551615",
+  });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_due");
+
+  res = await fx.api("GET", `/v1/invoices/${(2n ** 256n).toString()}`);
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_request");
+
+  res = await fx.api("POST", "/v1/tx/allow", { spender: agentAddress, cap: "0", expiry: DUE.toString() });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_amount");
+
+  res = await fx.api("POST", "/v1/tx/allow", { spender: agentAddress, cap: "1000000", expiry: "1" });
+  assert.equal(res.status, 409, JSON.stringify(res.json));
+  assert.equal(res.json.error, "past_due");
+
+  res = await fx.api("POST", "/v1/tx/register", { name: "Ada\nOkonkwo" });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_request");
+
+  res = await fx.api("POST", "/v1/tx/register", { name: "José" });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_request");
+
+  res = await fx.api("POST", "/v1/tx/invoice", {
+    amount: "1",
+    reference: "bad\u001b[2J",
+    due: DUE.toString(),
+  });
+  assert.equal(res.status, 400, JSON.stringify(res.json));
+  assert.equal(res.json.error, "bad_request");
 
   const payerBalance = await fx.publicClient.readContract({
     address: fx.token,

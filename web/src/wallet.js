@@ -1,5 +1,7 @@
-import { decodeEventLog, encodeFunctionData, getAddress, parseAbiItem } from "viem";
-import { chainName, networkParams, rpcUrl, session } from "./session.js";
+import { decodeEventLog, decodeFunctionResult, encodeFunctionData, getAddress, parseAbiItem } from "viem";
+import { ciroAbi } from "../../packages/api/src/abi.js";
+import { chainName, deploymentFor, networkParams, rpcUrl, session } from "./session.js";
+import { verifyStep } from "./tx-guard.js";
 
 const created = parseAbiItem(
   "event InvoiceCreated(uint256 indexed id, address indexed payee, uint256 amount, uint64 due, string memo)",
@@ -82,7 +84,7 @@ export async function switchTo(chainId) {
   session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
 }
 
-async function rpc(method, params) {
+export async function rpc(method, params) {
   const url = rpcUrl();
   if (!url) throw new Error("Set the chain RPC on the Developers screen.");
   const response = await fetch(url, {
@@ -106,10 +108,40 @@ export async function tokenBalance(token, account) {
   return BigInt(raw);
 }
 
+export async function readInvoiceOnChain(id, contract) {
+  const data = encodeFunctionData({ abi: ciroAbi, functionName: "getInvoice", args: [BigInt(id)] });
+  const raw = await rpc("eth_call", [{ to: contract, data }, "latest"]);
+  const result = decodeFunctionResult({ abi: ciroAbi, functionName: "getInvoice", data: raw });
+  return {
+    payee: result[0],
+    amount: result[1],
+    payer: result[2],
+    due: result[3],
+    paidAt: result[4],
+    chainId: result[5],
+    memo: result[6],
+    payeeName: result[7],
+  };
+}
+
+export async function checkInvoiceOnChain(id, claimed, contract) {
+  const data = encodeFunctionData({ abi: ciroAbi, functionName: "checkInvoice", args: [BigInt(id), claimed] });
+  const raw = await rpc("eth_call", [{ to: contract, data }, "latest"]);
+  const result = Number(decodeFunctionResult({ abi: ciroAbi, functionName: "checkInvoice", data: raw }));
+  return result === 2 ? "exact" : result === 1 ? "close" : "none";
+}
+
+export async function chainNow() {
+  const block = await rpc("eth_getBlockByNumber", ["latest", false]);
+  return Number(BigInt(block.timestamp));
+}
+
 export async function broadcast(steps) {
   const ethereum = provider();
   if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
   if (!session.account) throw new Error("Connect a wallet first.");
+  const deployment = deploymentFor(session.meta?.chainId);
+  for (const step of steps) verifyStep(step, deployment, step.expect ?? {});
   const receipts = [];
   for (const step of steps) {
     // A wallet on another chain will quote that chain's gas, often ETH on
