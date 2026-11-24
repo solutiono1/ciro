@@ -1,4 +1,4 @@
-import { BaseError, encodeFunctionData, getAddress, parseAbiItem, zeroAddress } from "viem";
+import { BaseError, decodeEventLog, encodeEventTopics, encodeFunctionData, getAddress, parseAbiItem, zeroAddress } from "viem";
 import { ciroAbi, RESULTS, tokenAbi } from "./abi.js";
 import { approvalAmounts } from "./approval.js";
 import { apiErrorFromRevert, ApiError } from "./errors.js";
@@ -12,6 +12,8 @@ const paidEvent = parseAbiItem(
 const allowanceSetEvent = parseAbiItem(
   "event AllowanceSet(address indexed payee, address indexed spender, uint256 cap, uint64 expiry)",
 );
+const paidTopic = encodeEventTopics({ abi: [paidEvent] })[0];
+const allowanceSetTopic = encodeEventTopics({ abi: [allowanceSetEvent] })[0];
 
 export function revertName(err) {
   if (!(err instanceof BaseError)) return null;
@@ -123,6 +125,70 @@ export async function matchInvoice(state, id, name) {
   return RESULTS[Number(result)] ?? "none";
 }
 
+function topicForId(id) {
+  return `0x${BigInt(id).toString(16).padStart(64, "0")}`;
+}
+
+function topicForAddress(address) {
+  return `0x${getAddress(address).slice(2).toLowerCase().padStart(64, "0")}`;
+}
+
+function normalizeExplorerLog(raw, event) {
+  const decoded = decodeEventLog({ abi: [event], data: raw.data, topics: raw.topics });
+  return {
+    ...raw,
+    args: decoded.args,
+    blockNumber: BigInt(raw.blockNumber),
+    transactionHash: raw.transactionHash,
+  };
+}
+
+// The Aevum RPC caps eth_getLogs at 1,000 blocks. The explorer indexes the same
+// logs without that cap, so a receipt or a history list does not need dozens of
+// RPC calls. Any failure falls back to the chunked RPC scan below.
+async function explorerLogs(state, topic0, { topic1, topic2 } = {}) {
+  if (!state.config.explorerUrl) return null;
+  const params = new URLSearchParams({
+    module: "logs",
+    action: "getLogs",
+    fromBlock: state.config.startBlock.toString(),
+    toBlock: "latest",
+    address: state.config.address,
+    topic0,
+  });
+  if (topic1) {
+    params.set("topic1", topic1);
+    params.set("topic0_1_opr", "and");
+  }
+  if (topic2) {
+    params.set("topic2", topic2);
+    params.set("topic0_2_opr", "and");
+  }
+  try {
+    const response = await fetch(`${state.config.explorerUrl}/api?${params.toString()}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return null;
+    const json = await response.json();
+    if (!Array.isArray(json.result)) return null;
+    return json.result;
+  } catch {
+    return null;
+  }
+}
+
+function decodeExplorerLogs(raws, event) {
+  const logs = [];
+  for (const raw of raws) {
+    try {
+      logs.push(normalizeExplorerLog(raw, event));
+    } catch {
+      // Skip a log the event ABI cannot decode.
+    }
+  }
+  return logs;
+}
+
 export async function scanLogs(state, event, args) {
   // viem caches eth_blockNumber. A cached head hides logs from blocks mined after it.
   const latest = await state.client.getBlockNumber({ cacheTime: 0 });
@@ -146,12 +212,18 @@ export async function scanLogs(state, event, args) {
 }
 
 export async function findPaid(state, id) {
+  const fast = await explorerLogs(state, paidTopic, { topic1: topicForId(id) });
+  if (fast) {
+    const logs = decodeExplorerLogs(fast, paidEvent).filter((log) => log.args.id.toString() === id.toString());
+    return logs.length > 0 ? logs[logs.length - 1] : null;
+  }
   const logs = await scanLogs(state, paidEvent, { id });
   return logs.length > 0 ? logs[logs.length - 1] : null;
 }
 
 export async function paidLogsForPayer(state, payer) {
-  const logs = await scanLogs(state, paidEvent, { payer });
+  const fast = await explorerLogs(state, paidTopic, { topic2: topicForAddress(payer) });
+  const logs = fast ? decodeExplorerLogs(fast, paidEvent) : await scanLogs(state, paidEvent, { payer });
   const rows = [];
   const seen = new Set();
   for (let index = logs.length - 1; index >= 0 && rows.length < 100; index -= 1) {
@@ -165,7 +237,8 @@ export async function paidLogsForPayer(state, payer) {
 }
 
 export async function allowanceRows(state, payee) {
-  const sets = await scanLogs(state, allowanceSetEvent, { payee });
+  const fast = await explorerLogs(state, allowanceSetTopic, { topic1: topicForAddress(payee) });
+  const sets = fast ? decodeExplorerLogs(fast, allowanceSetEvent) : await scanLogs(state, allowanceSetEvent, { payee });
   const spenders = [];
   const seen = new Set();
   for (const log of sets) {
