@@ -195,6 +195,7 @@ npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CH
 | API | `CIRO_ADDRESS` | Ciro contract address. Required. |
 | API | `CIRO_CHAIN_ID` | Expected chain ID. Defaults to `44005`. |
 | API | `CIRO_START_BLOCK` | First block scanned for events. Defaults to `0`; set it to the deploy block on a long chain. |
+| API | `CIRO_EXPLORER_URL` | Optional Blockscout URL. When set, receipts and allowances use the explorer's indexed logs instead of one RPC call per 1,000 blocks. |
 | API | `PORT` | HTTP port. Defaults to `8787`. |
 | API | `HOST` | Bind address. Defaults to `127.0.0.1`; the container sets `0.0.0.0`. |
 | Web | `VITE_API_URL` | API base URL baked into the build. |

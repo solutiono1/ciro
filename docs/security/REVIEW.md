@@ -106,7 +106,7 @@ v2 should either preserve non-ASCII bytes in the hash or reject non-ASCII on cha
 
 `GET /v1/payers/:address/receipts` scanned all `Paid` logs once to get the ids, then called `getReceipt` for each id, and each `getReceipt` scanned all logs again. With 100 receipts that is about 101 full scans for one unauthenticated request.
 
-Fix: `paidLogsForPayer` returns the id and the decoded log together, and `getReceipt` accepts the known log. The route now scans once and reads the invoices. This is still O(100) `eth_call`s, but not O(100 × blocks).
+Fix: `paidLogsForPayer` returns the id and the decoded log together, and `getReceipt` accepts the known log. The route now scans once and reads the invoices. The API also uses the Aevum explorer's indexed logs when `CIRO_EXPLORER_URL` is set, because the RPC caps `eth_getLogs` at 1,000 blocks; the chunked RPC scan remains the fallback. On the live deployment the payer receipts request dropped from about 16 seconds to about one second.
 
 Residual: the public API has no rate limit. A production deployment should add one at the proxy or the server.
 
