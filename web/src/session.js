@@ -1,6 +1,27 @@
 const API_KEY = "ciro.apiUrl";
 const RPC_KEY = "ciro.rpcUrl";
 
+// The live Aevum deployment. The web pins these addresses so a compromised
+// API cannot move a signature to another contract or token.
+export const AEVUM = {
+  chainId: 44005,
+  contract: "0x4aceb37ecace160b4363111460020c2d088c529c",
+  token: "0x456569838f1d43009a91eba4263147afd7233483",
+};
+
+export function aevumDeployment(chainId) {
+  return Number(chainId) === AEVUM.chainId ? AEVUM : null;
+}
+
+export function deploymentFor(chainId, meta = session.meta) {
+  const pinned = aevumDeployment(chainId);
+  if (pinned) return pinned;
+  if (meta && Number(meta.chainId) === Number(chainId)) {
+    return { chainId: Number(meta.chainId), contract: meta.contract, token: meta.token };
+  }
+  return null;
+}
+
 export const session = {
   account: null,
   chainId: null,

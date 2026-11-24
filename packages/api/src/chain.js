@@ -62,7 +62,10 @@ export async function loadMeta(state) {
       abi: tokenAbi,
       functionName: "symbol",
     });
-    if (typeof found === "string" && found.length > 0 && found.length <= 16) symbol = found;
+    if (typeof found === "string") {
+      const clean = found.replace(/[\u0000-\u001f\u007f-\u009f]/g, "");
+      if (clean.length > 0 && clean.length <= 16) symbol = clean;
+    }
   } catch {
     symbol = "tUSD8";
   }
@@ -147,18 +150,18 @@ export async function findPaid(state, id) {
   return logs.length > 0 ? logs[logs.length - 1] : null;
 }
 
-export async function paidIdsForPayer(state, payer) {
+export async function paidLogsForPayer(state, payer) {
   const logs = await scanLogs(state, paidEvent, { payer });
-  const ids = [];
+  const rows = [];
   const seen = new Set();
-  for (let index = logs.length - 1; index >= 0 && ids.length < 100; index -= 1) {
+  for (let index = logs.length - 1; index >= 0 && rows.length < 100; index -= 1) {
     const id = logs[index].args.id;
     const key = id.toString();
     if (seen.has(key)) continue;
     seen.add(key);
-    ids.push(id);
+    rows.push({ id, log: logs[index] });
   }
-  return ids;
+  return rows;
 }
 
 export async function allowanceRows(state, payee) {
@@ -261,7 +264,7 @@ export async function buildPay(state, id, name, fromAllowance, spender) {
   const tx = txBody(state, encodePay(id, name, fromAllowance), summary);
   tx.approvals = [];
   if (spender) {
-    let current = 0n;
+    let current;
     try {
       current = await state.client.readContract({
         address: meta.token,
@@ -270,7 +273,9 @@ export async function buildPay(state, id, name, fromAllowance, spender) {
         args: [spender, state.config.address],
       });
     } catch {
-      current = 0n;
+      // A failed read must not become "no allowance": that can emit a
+      // redundant approve that a strict token rejects.
+      throw new ApiError(502, "chain_unavailable");
     }
     for (const amount of approvalAmounts(current, inv.amount)) {
       tx.approvals.push({

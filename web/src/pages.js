@@ -1,9 +1,12 @@
+import { decodeEventLog } from "viem";
+import { ciroAbi } from "../../packages/api/src/abi.js";
 import { api } from "./api.js";
-import { esc, feeLine, foldedText, formatUnits, parseHuman, shortAddress, when } from "./format.js";
+import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, shortAddress, when } from "./format.js";
 import { payDecision } from "./pay-state.js";
 import {
   apiUrl,
   chainName,
+  deploymentFor,
   explorerAddress,
   explorerTx,
   faucetUrl,
@@ -14,11 +17,15 @@ import {
 import {
   addNetwork,
   broadcast,
+  chainNow,
+  checkInvoiceOnChain,
   connect,
   createdId,
   disconnect,
   nativeBalance,
   provider,
+  readInvoiceOnChain,
+  rpc,
   switchTo,
   tokenBalance,
 } from "./wallet.js";
@@ -238,6 +245,7 @@ async function requestTestToken(button, statusEl) {
   if (label) label.textContent = "Minting 1,000 tUSD8";
   try {
     const tx = await api("POST", "/v1/tx/faucet", { address: session.account });
+    tx.expect = { kind: "mint", to: session.account, amount: 1_000n * 1_000_000n };
     await broadcast([tx]);
     if (statusEl) statusEl.textContent = "Minted 1,000 tUSD8.";
     if (label) label.textContent = "Minted 1,000 tUSD8";
@@ -878,6 +886,10 @@ export function bindStart(go) {
   const form = document.querySelector("#register");
   const input = document.querySelector("#name");
   input?.addEventListener("input", () => {
+    if (/[^\x20-\x7E]/.test(input.value)) {
+      document.querySelector("#preview").textContent = "Use Latin letters, numbers, and spaces.";
+      return;
+    }
     const folded = foldedText(input.value);
     document.querySelector("#preview").textContent = folded
       ? `Stored as “${folded}”. Capitals and extra spaces still match.`
@@ -887,8 +899,13 @@ export function bindStart(go) {
     event.preventDefault();
     const error = document.querySelector("#form-error");
     error.textContent = "";
+    if (/[^\x20-\x7E]/.test(input.value)) {
+      error.textContent = "Use Latin letters, numbers, and spaces.";
+      return;
+    }
     try {
       const tx = await api("POST", "/v1/tx/register", { name: input.value });
+      tx.expect = { kind: "register", name: input.value };
       document.querySelector("#preview").textContent = tx.summary;
       await broadcast([tx]);
       await loadPayee();
@@ -977,11 +994,13 @@ export function bindCreate() {
     const error = document.querySelector("#form-error");
     error.textContent = "";
     try {
-      const tx = await api("POST", "/v1/tx/invoice", {
-        amount: parseHuman(document.querySelector("#amount").value.trim()).toString(),
-        reference: document.querySelector("#reference").value,
-        due: document.querySelector("#due").value,
-      });
+      const amount = parseHuman(document.querySelector("#amount").value.trim()).toString();
+      const reference = document.querySelector("#reference").value;
+      const dueValue = document.querySelector("#due").value;
+      const parsedDue = Date.parse(`${dueValue}T23:59:59Z`);
+      const due = Number.isFinite(parsedDue) ? Math.floor(parsedDue / 1000) : 0;
+      const tx = await api("POST", "/v1/tx/invoice", { amount, reference, due: dueValue });
+      tx.expect = { kind: "create", amount, memo: reference, due };
       error.className = "muted";
       error.textContent = tx.summary;
       const receipts = await broadcast([tx]);
@@ -998,6 +1017,7 @@ export function bindCreate() {
 export async function invoiceDetail(id) {
   const invoice = await api("GET", `/v1/invoices/${id}`);
   const closed = invoice.status !== "open";
+  const payeeHref = explorerAddress(invoice.payee);
   return frame(`
     <div class="card deed">
       <div class="doc-head">
@@ -1012,6 +1032,7 @@ export async function invoiceDetail(id) {
       <div class="doc-facts">
         <dl class="facts">
           <div class="fact-row"><dt>Payee</dt><dd>${esc(invoice.payeeName)}</dd></div>
+          <div class="fact-row"><dt>Payee address</dt><dd class="mono">${payeeHref ? `<a href="${esc(payeeHref)}" rel="noopener">${esc(shortAddress(invoice.payee))}</a>` : esc(shortAddress(invoice.payee))}</dd></div>
           <div class="fact-row"><dt>Reference</dt><dd>${esc(invoice.reference || "No reference")}</dd></div>
           <div class="fact-row"><dt>Due</dt><dd>${esc(when(invoice.due))}</dd></div>
           <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(invoice.chainId))}</dd></div>
@@ -1030,10 +1051,60 @@ export async function invoiceDetail(id) {
 
 /* Pay */
 
+let currentPay = null;
+
+function payReadError(copy) {
+  return docShell(`
+    <main class="doc-wrap pub-main">
+      <div class="page-head">
+        <p class="bracket">[ Invoice ]</p>
+        <h2 class="h2">This invoice cannot be shown</h2>
+        <p class="lede">${esc(copy)}</p>
+      </div>
+      <p><a class="btn" href="#/">Back to Ciro ${arrow()}</a></p>
+    </main>
+  `);
+}
+
 export async function payPage(id) {
-  const invoice = await api("GET", `/v1/invoices/${id}`);
-  if (invoice.status === "paid") return null;
-  if (invoice.status === "past_due") {
+  const deployment = deploymentFor(session.meta?.chainId);
+  if (!deployment) return payReadError("The Ciro deployment is not loaded. Reload the page and try again.");
+
+  let inv;
+  try {
+    inv = await readInvoiceOnChain(id, deployment.contract);
+  } catch {
+    return payReadError("The chain did not return this invoice. Check the link and try again.");
+  }
+  if (Number(inv.chainId) !== Number(session.meta?.chainId)) {
+    return payReadError("This invoice was created on another network.");
+  }
+  if (/[^\x20-\x7E]/.test(inv.payeeName)) {
+    return payReadError("This invoice uses a name with characters the app does not support. It cannot be paid here.");
+  }
+  if (inv.paidAt !== 0n) return null;
+
+  const now = await chainNow();
+  const status = now > Number(inv.due) ? "past_due" : "open";
+  const invoice = {
+    id: String(id),
+    payee: inv.payee,
+    payeeName: inv.payeeName,
+    amount: inv.amount.toString(),
+    amountDisplay: formatUnits(inv.amount),
+    symbol: session.meta?.symbol || "tUSD8",
+    reference: inv.memo,
+    due: inv.due.toString(),
+    paidAt: inv.paidAt.toString(),
+    chainId: Number(inv.chainId),
+    status,
+  };
+  currentPay = invoice;
+
+  const payeeHref = explorerAddress(invoice.payee);
+  const payeeRow = `<div class="fact-row"><dt>Payee address</dt><dd class="mono">${payeeHref ? `<a href="${esc(payeeHref)}" rel="noopener">${esc(shortAddress(invoice.payee))}</a>` : esc(shortAddress(invoice.payee))}</dd></div>`;
+
+  if (status === "past_due") {
     return docShell(`
       <main class="doc-wrap pub-main">
         <div class="card deed">
@@ -1049,6 +1120,7 @@ export async function payPage(id) {
           <div class="doc-facts">
             <dl class="facts">
               <div class="fact-row"><dt>Payee</dt><dd>${esc(invoice.payeeName)}</dd></div>
+              ${payeeRow}
               <div class="fact-row"><dt>Reference</dt><dd>${esc(invoice.reference || "No reference")}</dd></div>
               <div class="fact-row"><dt>Due</dt><dd>${esc(when(invoice.due))}</dd></div>
             </dl>
@@ -1060,6 +1132,7 @@ export async function payPage(id) {
       </main>
     `);
   }
+
   return docShell(`
     <main class="doc-wrap pub-main">
       <div class="card deed">
@@ -1075,6 +1148,7 @@ export async function payPage(id) {
         <div class="doc-facts">
           <dl class="facts">
             <div class="fact-row"><dt>Pay</dt><dd>${esc(invoice.payeeName)}</dd></div>
+            ${payeeRow}
             <div class="fact-row"><dt>Reference</dt><dd>${esc(invoice.reference || "No reference")}</dd></div>
             <div class="fact-row"><dt>Due</dt><dd>${esc(when(invoice.due))}</dd></div>
             <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(invoice.chainId))}</dd></div>
@@ -1089,6 +1163,7 @@ export async function payPage(id) {
             <div id="action"></div>
           </form>
           <p class="fineprint">A wrong name does not start a payment. A finished payment cannot be pulled back.</p>
+          <p class="fineprint">The name is a check, not a global identity. Compare the payee address before you sign.</p>
         </div>
       </div>
     </main>
@@ -1119,11 +1194,14 @@ async function refreshPay(id, name) {
   const match = document.querySelector("#match");
   const action = document.querySelector("#action");
   if (!payForm(id) || !match || !action) return;
+  const deployment = deploymentFor(session.meta?.chainId);
+  const invoice = currentPay?.id === String(id) ? currentPay : null;
+  if (!deployment || !invoice) return;
+
   let result = null;
   if (name.trim()) {
     try {
-      const body = await api("POST", `/v1/invoices/${id}/check`, { name });
-      result = body.result;
+      result = await checkInvoiceOnChain(id, name, deployment.contract);
     } catch (err) {
       if (mine !== payTicket || !payForm(id)) return;
       match.className = "bad";
@@ -1133,7 +1211,20 @@ async function refreshPay(id, name) {
     }
   }
   if (mine !== payTicket || !payForm(id)) return;
-  const invoice = await api("GET", `/v1/invoices/${id}`);
+
+  try {
+    const latest = await readInvoiceOnChain(id, deployment.contract);
+    if (latest.paidAt !== 0n) {
+      location.hash = `#/receipt/${id}`;
+      return;
+    }
+    const now = await chainNow();
+    invoice.status = now > Number(latest.due) ? "past_due" : "open";
+  } catch {
+    // The contract still enforces the date and the paid flag on submit.
+  }
+  if (mine !== payTicket || !payForm(id)) return;
+
   const funds = await fundsFor(invoice.amount);
   if (mine !== payTicket || !payForm(id)) return;
   const decision = payDecision({
@@ -1202,9 +1293,12 @@ async function submitPay(id, name, invoice) {
   action.innerHTML = `<p class="fineprint">Preparing the payment.</p>`;
   try {
     const tx = await api("POST", "/v1/tx/pay", { id, name, payer: session.account });
-    const lines = [...(tx.approvals ?? []), tx].map((step) => `<p class="fineprint">${esc(step.summary)}</p>`).join("");
+    const steps = [...(tx.approvals ?? []), tx];
+    for (const step of tx.approvals ?? []) step.expect = { kind: "approve", amount: invoice.amount };
+    tx.expect = { kind: "pay", id: invoice.id, name };
+    const lines = steps.map((step) => `<p class="fineprint">${esc(step.summary)}</p>`).join("");
     action.innerHTML = `${lines}<p class="fineprint">Confirm in the wallet.</p>`;
-    await broadcast([...(tx.approvals ?? []), tx]);
+    await broadcast(steps);
     location.hash = `#/receipt/${invoice.id}`;
   } catch (err) {
     action.innerHTML = `<p class="bad">${esc(err.message)}</p>`;
@@ -1213,48 +1307,102 @@ async function submitPay(id, name, invoice) {
 
 /* Receipt */
 
+function noReceipt(id) {
+  return docShell(`
+    <main class="doc-wrap pub-main">
+      <div class="page-head">
+        <p class="bracket">[ Receipt ]</p>
+        <h2 class="h2">No receipt yet</h2>
+        <p class="lede">Invoice ${esc(id)} is not paid.</p>
+      </div>
+      <p><a class="btn" href="#/pay/${esc(id)}">Back to the invoice ${arrow()}</a></p>
+    </main>
+  `);
+}
+
 export async function receiptPage(id) {
-  let receipt;
+  const deployment = deploymentFor(session.meta?.chainId);
+  let onchain = null;
+  if (deployment) {
+    try {
+      onchain = await readInvoiceOnChain(id, deployment.contract);
+    } catch {
+      onchain = null;
+    }
+  }
+  if (onchain && onchain.paidAt === 0n) return noReceipt(id);
+
+  let receipt = null;
   try {
     receipt = await api("GET", `/v1/receipts/${id}`);
   } catch (err) {
-    if (err.code === "not_paid") {
-      return docShell(`
-        <main class="doc-wrap pub-main">
-          <div class="page-head">
-            <p class="bracket">[ Receipt ]</p>
-            <h2 class="h2">No receipt yet</h2>
-            <p class="lede">Invoice ${esc(id)} is not paid.</p>
-          </div>
-          <p><a class="btn" href="#/pay/${esc(id)}">Back to the invoice ${arrow()}</a></p>
-        </main>
-      `);
-    }
-    throw err;
+    if (err.code !== "not_paid") throw err;
   }
-  const href = explorerTx(receipt.transactionHash);
+  if (!receipt && !onchain) return noReceipt(id);
+  if (!receipt && onchain && onchain.paidAt === 0n) return noReceipt(id);
+
+  const amount = onchain ? onchain.amount : BigInt(receipt.amount);
+  const fee = onchain ? feeOf(amount, session.meta?.feeBps ?? 0) : BigInt(receipt.fee || "0");
+  const net = amount - fee;
+  const payee = onchain ? onchain.payee : receipt.payee;
+  const payer = onchain ? onchain.payer : receipt.payer;
+  const payeeName = onchain ? onchain.payeeName : receipt.payeeName;
+  const reference = onchain ? onchain.memo : receipt.reference;
+  const paidAt = onchain ? onchain.paidAt : receipt.paidAt;
+  const chainId = onchain ? Number(onchain.chainId) : receipt.chainId;
+  const symbol = session.meta?.symbol || receipt?.symbol || "tUSD8";
+  const hash = receipt?.transactionHash ?? null;
+
+  let verified = false;
+  if (onchain && hash && deployment) {
+    try {
+      const tx = await rpc("eth_getTransactionReceipt", [hash]);
+      verified = (tx?.logs ?? []).some((log) => {
+        if (String(log.address).toLowerCase() !== String(deployment.contract).toLowerCase()) return false;
+        try {
+          const decoded = decodeEventLog({ abi: ciroAbi, data: log.data, topics: log.topics });
+          return decoded.eventName === "Paid"
+            && decoded.args.id.toString() === String(id)
+            && String(decoded.args.payee).toLowerCase() === String(payee).toLowerCase()
+            && String(decoded.args.payer).toLowerCase() === String(payer).toLowerCase()
+            && decoded.args.amount.toString() === amount.toString();
+        } catch {
+          return false;
+        }
+      });
+    } catch {
+      verified = false;
+    }
+  }
+  const href = verified ? explorerTx(hash) : null;
+  const payeeHref = explorerAddress(payee);
   return docShell(`
     <main class="doc-wrap pub-main">
       <div class="card deed">
         <div class="doc-head">
           <div class="doc-top">
-            <p class="bracket">Receipt ${esc(receipt.id)}</p>
+            <p class="bracket">Receipt ${esc(id)}</p>
             <span class="status status-paid">Paid</span>
           </div>
-          <p class="amount">${esc(receipt.amountDisplay)}</p>
-          <p class="symbol">${esc(receipt.symbol)}</p>
+          <p class="amount">${esc(formatUnits(amount))}</p>
+          <p class="symbol">${esc(symbol)}</p>
         </div>
         <div class="cut"></div>
         <div class="doc-facts">
           <dl class="facts">
-            <div class="fact-row"><dt>Payee</dt><dd>${esc(receipt.payeeName)}</dd></div>
-            <div class="fact-row"><dt>Payer</dt><dd class="mono">${esc(receipt.payer)}</dd></div>
-            <div class="fact-row"><dt>Reference</dt><dd>${esc(receipt.reference || "No reference")}</dd></div>
-            <div class="fact-row"><dt>Fee</dt><dd>${esc(receipt.feeDisplay)}</dd></div>
-            <div class="fact-row"><dt>Paid</dt><dd>${esc(when(receipt.paidAt))}</dd></div>
-            <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(receipt.chainId))}</dd></div>
-            <div class="fact-row"><dt>Transaction</dt><dd class="mono">${href ? `<a href="${esc(href)}" rel="noopener">${esc(receipt.transactionHash)}</a>` : esc(receipt.transactionHash || "Not indexed")}</dd></div>
+            <div class="fact-row"><dt>Payee</dt><dd>${esc(payeeName)}</dd></div>
+            <div class="fact-row"><dt>Payee address</dt><dd class="mono">${payeeHref ? `<a href="${esc(payeeHref)}" rel="noopener">${esc(shortAddress(payee))}</a>` : esc(shortAddress(payee))}</dd></div>
+            <div class="fact-row"><dt>Payer</dt><dd class="mono">${esc(payer)}</dd></div>
+            <div class="fact-row"><dt>Reference</dt><dd>${esc(reference || "No reference")}</dd></div>
+            <div class="fact-row"><dt>Fee</dt><dd>${esc(formatFee(fee))}</dd></div>
+            ${fee > 0n ? `<div class="fact-row"><dt>Net to payee</dt><dd>${esc(formatUnits(net))}</dd></div>` : ""}
+            <div class="fact-row"><dt>Paid</dt><dd>${esc(when(paidAt))}</dd></div>
+            <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(chainId))}</dd></div>
+            <div class="fact-row"><dt>Transaction</dt><dd class="mono">${href ? `<a href="${esc(href)}" rel="noopener">${esc(hash)}</a>` : esc(hash || "Not indexed")}</dd></div>
           </dl>
+        </div>
+        <div class="doc-body">
+          <p class="fineprint ${verified ? "" : "warn"}">${verified ? "Verified on chain." : "This receipt could not be verified on chain. Check the transaction before you file it."}</p>
         </div>
       </div>
     </main>
@@ -1384,14 +1532,23 @@ export function profilePage() {
 export function bindProfile(go) {
   const input = document.querySelector("#name");
   input?.addEventListener("input", () => {
+    if (/[^\x20-\x7E]/.test(input.value)) {
+      document.querySelector("#preview").textContent = "Use Latin letters, numbers, and spaces.";
+      return;
+    }
     const folded = foldedText(input.value);
     document.querySelector("#preview").textContent = folded ? `Stored as “${folded}”.` : "This name is empty.";
   });
   document.querySelector("#rename")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const error = document.querySelector("#form-error");
+    if (/[^\x20-\x7E]/.test(input.value)) {
+      error.textContent = "Use Latin letters, numbers, and spaces.";
+      return;
+    }
     try {
       const tx = await api("POST", "/v1/tx/register", { name: input.value });
+      tx.expect = { kind: "register", name: input.value };
       error.className = "muted";
       error.textContent = tx.summary;
       await broadcast([tx]);
@@ -1447,11 +1604,13 @@ export function bindSettings(go) {
     event.preventDefault();
     const error = document.querySelector("#form-error");
     try {
-      const tx = await api("POST", "/v1/tx/allow", {
-        spender: document.querySelector("#spender").value.trim(),
-        cap: parseHuman(document.querySelector("#cap").value.trim()).toString(),
-        expiry: document.querySelector("#expiry").value,
-      });
+      const spender = document.querySelector("#spender").value.trim();
+      const cap = parseHuman(document.querySelector("#cap").value.trim()).toString();
+      const expiryValue = document.querySelector("#expiry").value;
+      const parsedExpiry = Date.parse(`${expiryValue}T23:59:59Z`);
+      const expiry = Number.isFinite(parsedExpiry) ? Math.floor(parsedExpiry / 1000) : 0;
+      const tx = await api("POST", "/v1/tx/allow", { spender, cap, expiry: expiryValue });
+      tx.expect = { kind: "allow", spender, cap, expiry };
       error.className = "muted";
       error.textContent = tx.summary;
       await broadcast([tx]);
@@ -1466,6 +1625,11 @@ export function bindSettings(go) {
       const error = document.querySelector("#form-error");
       try {
         const tx = await api("POST", "/v1/tx/revoke", { spender: button.dataset.spender });
+        tx.expect = { kind: "revoke", spender: button.dataset.spender };
+        if (error) {
+          error.className = "muted";
+          error.textContent = tx.summary;
+        }
         await broadcast([tx]);
         await go();
       } catch (err) {
@@ -1493,6 +1657,7 @@ export function developersPage(apiBase, rpc) {
         <div class="fact-row"><dt>Token</dt><dd>${link(meta?.token, tokenHref)}</dd></div>
         <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(meta?.chainId))}</dd></div>
         <div class="fact-row"><dt>Fee</dt><dd>${meta ? `${meta.feeBps / 100}%` : "Not loaded"}</dd></div>
+        <div class="fact-row"><dt>Source</dt><dd>${contractHref ? `<a href="${esc(contractHref)}?tab=contract" rel="noopener">Verified ${icon("external", "ic-16")}</a>` : "Not loaded"}</dd></div>
       </dl>
     </div>
     <div class="actions mt-16">
@@ -1530,7 +1695,8 @@ const invoice = await ciro.invoice(1);</pre>
         <div class="field"><label class="label" for="rpc-url">Chain RPC</label><input id="rpc-url" value="${esc(rpc)}" /></div>
       </div>
       <div class="form-foot"><button class="btn btn-primary" type="submit">Save ${arrow()}</button></div>
-    </form>`;
+    </form>
+    <p class="fineprint">This endpoint can prepare transactions for your wallet. Only save an endpoint you trust. The live build pins the Ciro contract and token addresses.</p>`;
   if (session.account) {
     return frame(`
       <div class="page-head">

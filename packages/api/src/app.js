@@ -15,7 +15,7 @@ import {
   loadMeta,
   matchInvoice,
   matchPayee,
-  paidIdsForPayer,
+  paidLogsForPayer,
   publicMeta,
   readInvoice,
   readPayee,
@@ -27,6 +27,9 @@ import { feeOf, formatFee, formatUnits, parseBaseUnits } from "../../shared/src/
 import { isEmptyName } from "../../shared/src/normalize.js";
 
 const UINT64 = 18446744073709551615n;
+const MAX_UINT256 = (1n << 256n) - 1n;
+// 9999-12-31T23:59:59Z. Above this, a JavaScript Date cannot format the time.
+const MAX_DATE_SECONDS = 253402300799n;
 
 // The faucet is a testnet convenience. It is rate-limited per address and is
 // disabled entirely on a priced deployment, so it can never mint value that
@@ -83,9 +86,9 @@ async function dispatch(req, path, state) {
   const payee = path.match(/^\/v1\/payees\/(0x[0-9a-fA-F]{40})$/);
 
   if (req.method === "GET" && path === "/v1/meta") return { status: 200, body: await publicMeta(state) };
-  if (req.method === "GET" && invoice) return getOneInvoice(state, BigInt(invoice[1]));
-  if (req.method === "POST" && invoiceCheck) return postInvoiceCheck(state, BigInt(invoiceCheck[1]), await readJson(req));
-  if (req.method === "GET" && receipt) return getReceipt(state, BigInt(receipt[1]));
+  if (req.method === "GET" && invoice) return getOneInvoice(state, parseId(invoice[1]));
+  if (req.method === "POST" && invoiceCheck) return postInvoiceCheck(state, parseId(invoiceCheck[1]), await readJson(req));
+  if (req.method === "GET" && receipt) return getReceipt(state, parseId(receipt[1]));
   if (req.method === "POST" && path === "/v1/check") return postCheck(state, await readJson(req));
   if (req.method === "GET" && payeeInvoices) return getPayeeInvoices(state, requireAddress(payeeInvoices[1]));
   if (req.method === "GET" && payeeAllowances) return getAllowances(state, requireAddress(payeeAllowances[1]));
@@ -113,8 +116,10 @@ async function getPayeeInvoices(state, account) {
   const now = await chainNow(state);
   const ids = await listInvoiceIds(state, account);
   const truncated = ids.length > 100;
+  // Keep the newest 100. A payee with a long history must still see today's invoice.
+  const page = (truncated ? ids.slice(-100) : ids).reverse();
   const invoices = [];
-  for (const id of truncated ? ids.slice(0, 100) : ids) {
+  for (const id of page) {
     invoices.push(invoiceJson(id, await readInvoice(state, id), now, meta.symbol));
   }
   return { status: 200, body: { invoices, truncated } };
@@ -126,21 +131,24 @@ async function getAllowances(state, account) {
 }
 
 async function getPayerReceipts(state, account) {
-  const ids = await paidIdsForPayer(state, account);
+  // One log scan for the whole list. Asking getReceipt to find each log again
+  // would rescan the chain up to 100 times for a single request.
+  const rows = await paidLogsForPayer(state, account);
   const receipts = [];
-  for (const id of ids) {
-    const receipt = await getReceipt(state, id);
+  for (const row of rows) {
+    const receipt = await getReceipt(state, row.id, row.log);
     receipts.push(receipt.body);
   }
   return { status: 200, body: { receipts } };
 }
 
-async function getReceipt(state, id) {
+async function getReceipt(state, id, knownLog = null) {
   const meta = await loadMeta(state);
   const inv = await readInvoice(state, id);
   if (inv.paidAt === 0n) throw new ApiError(404, "not_paid");
-  const log = await findPaid(state, id);
+  const log = knownLog ?? await findPaid(state, id);
   const fee = log?.args?.fee ?? feeOf(inv.amount, meta.feeBps);
+  const net = inv.amount - fee;
   return {
     status: 200,
     body: {
@@ -153,6 +161,8 @@ async function getReceipt(state, id) {
       symbol: meta.symbol,
       fee: fee.toString(),
       feeDisplay: formatFee(fee),
+      net: net.toString(),
+      netDisplay: formatUnits(net),
       reference: inv.memo,
       paidAt: inv.paidAt.toString(),
       chainId: Number(inv.chainId),
@@ -182,6 +192,7 @@ async function postRegister(state, body) {
 
 async function postInvoice(state, body) {
   if (typeof body.reference !== "string" || body.reference.length > 256) throw new ApiError(400, "bad_request");
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(body.reference)) throw new ApiError(400, "bad_request");
   const amount = parseAmount(body.amount);
   if (amount === 0n) throw new ApiError(400, "bad_amount");
   const due = parseDue(body.due);
@@ -203,7 +214,10 @@ async function postPay(state, body, fromAllowance) {
 async function postAllow(state, body) {
   const spender = requireAddress(body.spender);
   const cap = parseAmount(body.cap);
+  if (cap === 0n) throw new ApiError(400, "bad_amount");
   const expiry = parseDue(body.expiry);
+  const now = await chainNow(state);
+  if (expiry <= now) throw new ApiError(409, "past_due");
   const meta = await loadMeta(state);
   const summary = `Allow ${spender} to settle up to ${formatUnits(cap)} ${meta.symbol} until ${isoFromSeconds(expiry)}`;
   return { status: 200, body: txBody(state, encodeAllow(spender, cap, expiry), summary) };
@@ -256,19 +270,25 @@ function parseDue(value) {
   } else {
     throw new ApiError(400, "bad_due");
   }
-  if (due > UINT64) throw new ApiError(400, "bad_due");
+  if (due > UINT64 || due > MAX_DATE_SECONDS) throw new ApiError(400, "bad_due");
   return due;
 }
 
 function parseId(value) {
-  if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return BigInt(value);
-  if (typeof value === "string" && /^[1-9]\d{0,77}$/.test(value)) return BigInt(value);
-  throw new ApiError(400, "bad_request");
+  let id;
+  if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) id = BigInt(value);
+  else if (typeof value === "string" && /^[1-9]\d{0,77}$/.test(value)) id = BigInt(value);
+  else throw new ApiError(400, "bad_request");
+  if (id > MAX_UINT256) throw new ApiError(400, "bad_request");
+  return id;
 }
 
 function requireName(value, allowEmpty) {
   if (typeof value !== "string" || value.length > 128) throw new ApiError(400, "bad_request");
   if (!allowEmpty && value.length === 0) throw new ApiError(400, "bad_request");
+  // The deployed fold drops every byte outside ASCII. Rejecting non-ASCII
+  // names here prevents a registration that would collide after folding.
+  if (/[^\x20-\x7E]/.test(value)) throw new ApiError(400, "bad_request");
   return value;
 }
 

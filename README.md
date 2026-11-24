@@ -12,7 +12,7 @@ A close name or an unknown name shows no pay button and moves no funds.
 
 [ciro-a9s.pages.dev](https://ciro-a9s.pages.dev) · [GitHub](https://github.com/solutiono1/ciro)
 
-Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B4363111460020c2d088C529C` · Fee 0
+Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B4363111460020c2d088C529C` · Fee 0 · [Source verified](https://explorer-test.qday.info/address/0x4AceB37ecAce160B4363111460020c2d088C529C?tab=contract)
 
 </div>
 
@@ -97,6 +97,21 @@ The live API URL, the two contract addresses, and every package command are on t
 
 ## Architecture
 
+```mermaid
+flowchart LR
+  Payee[Payee wallet] -->|register, create| Ciro[(Ciro contract)]
+  Payer[Payer wallet] -->|approve, pay exact name| Ciro
+  Ciro -->|tUSD8 net of fee| Payee
+  Ciro -->|Registered, InvoiceCreated, Paid| API[HTTP API]
+  API --> Web[Web app]
+  API --> CLI[CLI]
+  API --> MCP[MCP server]
+  API --> SDK[SDK]
+  Web -->|unsigned transaction| Payer
+  CLI -->|signed transaction| Ciro
+  MCP -->|unsigned transaction| Caller[Agent or caller]
+```
+
 | Package | What it is |
 |---|---|
 | `contracts/` | `Ciro` (Solidity, Shanghai) holds payees, invoices, and allowances. `MockUSD8` is a local test token. |
@@ -172,6 +187,23 @@ npm run dev -w @getciro/web       # web app on Vite
 npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CHAIN_ID
 ```
 
+## Configuration
+
+| Where | Variable | Purpose |
+|---|---|---|
+| API | `CIRO_RPC_URL` | Aevum RPC endpoint. Required. |
+| API | `CIRO_ADDRESS` | Ciro contract address. Required. |
+| API | `CIRO_CHAIN_ID` | Expected chain ID. Defaults to `44005`. |
+| API | `CIRO_START_BLOCK` | First block scanned for events. Defaults to `0`; set it to the deploy block on a long chain. |
+| API | `PORT` | HTTP port. Defaults to `8787`. |
+| API | `HOST` | Bind address. Defaults to `127.0.0.1`; the container sets `0.0.0.0`. |
+| Web | `VITE_API_URL` | API base URL baked into the build. |
+| Web | `VITE_RPC_URL` | Chain RPC used for balances and receipts. |
+| Contracts | `CIRO_TOKEN` | tUSD8 address passed to the constructor. |
+| Contracts | `CIRO_FEE_RECIPIENT` | Fee receiver passed to the constructor. |
+| Contracts | `CIRO_FEE_BPS` | Fee in basis points, `0` to `100`. This deployment uses `0`. |
+| CLI | `CIRO_CONFIG` | Config path. Defaults to `~/.ciro/config.json`. |
+
 ## Tests
 
 - `cd contracts && forge test` - 11 passed.
@@ -190,7 +222,32 @@ Ciro is deployed on QDay Aevum testnet at `0x4AceB37ecAce160B4363111460020c2d088
 | Exact name pays | [`0xfb5abc43`](https://explorer-test.qday.info/tx/0xfb5abc4355a35693fb25c3d8fa2516f31213ef276eed02bb28fdcb4c124bfe96) |
 | Wrong name is refused | [`0xe4c01ead`](https://explorer-test.qday.info/tx/0xe4c01ead88c8c56632332222fa920d4f7823d09d45737e8f499cdd904a6554db) (reverted) |
 
+## Known limits
+
+- tUSD8 has 6 decimals. The API and web format base units with that assumption.
+- Name folding is ASCII-only. Characters outside `a-z`, `0-9`, and spaces are dropped before matching. The app and API reject non-ASCII registrations; a direct contract call can still make one, and the app will not pay it.
+- A name is a confirmation check, not a global identity. Two payees can register the same name. Check the payee address on the invoice and the receipt.
+- The allowance cap limits `payFromAllowance`. A spender can always pay with `pay` from its own wallet, so the cap is a budget control, not a hard wallet limit.
+- There is no cancel. An invoice stays payable until its due time; use a short due date for a typo.
+- Invoice memos and payee names are public on chain.
+- Aevum tUSD8 has no public mint. The in-app faucet is local-only; on Aevum it links to the official QDay faucet.
+- Invoice and receipt lists cap at 100 rows. There is no indexer; the API scans contract events from `CIRO_START_BLOCK`.
+- The contract is immutable. A fee change or a logic change needs a new deployment.
+- The API holds no key and no database. It can build a transaction, but it cannot sign or recover a payment.
+
+## Roadmap
+
+- Publish the audit report and add invariant and fuzz tests for name folding, allowance accounting, and fee rounding.
+- Replace the event scan with an indexer so receipts load in one query and invoice lists paginate.
+- Add a small configurable settlement fee on mainnet, with the zero-fee testnet deployment kept as the reference.
+- Add session keys and per-invoice spend caps for agent payments, so an MCP client can prepare a payment under a bounded authority.
+- Ship a hosted invoice dashboard for small teams, with the SDK and CLI as the integration path.
+
+Revenue comes from the settlement fee on paid invoices. Reads, the SDK, and the CLI stay free. The first distribution is QDay builders and small agencies that invoice in stablecoins; the SDK and MCP are the path into agent workflows.
+
 ## Security
+
+The first review is in [docs/security/REVIEW.md](docs/security/REVIEW.md). It records the scope, the four independent review lanes, the findings, the fixes, the residual risks, and the v2 items. The contract has no Critical or High finding. Two client trust findings were fixed: the pay page now reads the invoice and the name check from the chain, and every returned transaction is decoded against the pinned contract, token, chain, invoice, name, and amount before the wallet signs.
 
 - Non-custodial. The API and MCP never hold a key; only the wallet or the CLI signs.
 - The contract enforces the exact amount, the exact name, and the due time.
