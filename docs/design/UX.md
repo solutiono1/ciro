@@ -176,7 +176,9 @@ One easing curve, `cubic-bezier(0.2, 0.7, 0.2, 1)`, on every transition. Motion 
 
 The landing uses one CC0 photo from StockSnap in `web/public/img/`: `paperwork-desk.jpg` by Matt Moloney, credited under it. Every icon on the landing is a line icon from the app's own set, one stroke and one size. The three 3D files in `web/public/icons/` are no longer used. The app screens use no photos.
 
-The landing's app preview (`.stage`) is a drawn stand-in for a real dashboard recording. The page does not play a video until one exists. The earlier `web/public/media/ciro-demo.webm` recorded the landing page itself, so the preview showed Ciro inside Ciro; the element was removed rather than shipped. `scripts/record-demo.mjs` records a click-through to that file. When a real dashboard pass exists, wire it back into `.stage` over the drawn preview, muted, looped, with `prefers-reduced-motion` keeping the still. The recording must be real app footage with mock data and a scripted cursor, not an AI-generated image.
+The landing's app preview (`.stage`) plays `web/public/media/ciro-demo-v2.mp4` over the drawn preview, with `ciro-demo-v2.webm` as the fallback and `ciro-demo-poster.jpg` as the poster. The MP4 is first because it is smaller and plays reliably; the WebM is the second source. The video is muted, looped, and playsinline, and `bindLanding` calls `play()` explicitly because some browsers ignore the autoplay attribute. If autoplay is blocked, the poster stays visible and the first pointer or key starts the video. `prefers-reduced-motion` removes the video and keeps the still preview.
+
+The raw capture from `scripts/record-deployed.mjs` starts on the landing page, so it shows Ciro inside Ciro for the first few seconds. Trim that intro before shipping a new clip as v2, and regenerate the poster from the first app frame. The recording must be real app footage, not an AI-generated image.
 
 The `[ bracket ]` labels stay as the section signature, in sentence case with no wide tracking. Display tracking is tight; small text and body text are not.
 
