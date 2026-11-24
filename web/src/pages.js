@@ -296,9 +296,9 @@ export function bindShell() {
 
 function appStage() {
   return `<section class="stage-wrap" aria-label="A preview of the Ciro app">
-    <!-- The screen recording (web/public/media/ciro-demo.webm) plays over this
+    <!-- The app recording (web/public/media/ciro-demo-v2.mp4) plays over this
          drawn preview when it exists. Until then the preview below holds the
-         space, so the landing never shows a broken video. -->
+         space, so the landing never shows a broken or blank video. -->
     <div class="wallpaper">
       <div class="stage" data-preview>
         <div class="stage-bar">
@@ -307,9 +307,9 @@ function appStage() {
           <span class="stage-tag">Screen recording</span>
         </div>
         <div class="stage-frame">
-          <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" aria-hidden="true" tabindex="-1">
-            <source src="/media/ciro-demo.webm" type="video/webm" />
-            <source src="/media/ciro-demo.mp4" type="video/mp4" />
+          <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" poster="/media/ciro-demo-poster.jpg" aria-hidden="true" tabindex="-1">
+            <source src="/media/ciro-demo-v2.mp4" type="video/mp4" />
+            <source src="/media/ciro-demo-v2.webm" type="video/webm" />
           </video>
           <div class="stage-app" aria-hidden="true">
         <aside class="stage-side">
@@ -568,10 +568,42 @@ export function bindLanding() {
       video.remove();
     } else {
       const show = () => video.classList.add("is-on");
-      if (video.readyState >= 2) show();
+      const start = () => {
+        if (!video.isConnected || !video.paused) return;
+        // Some browsers ignore the autoplay attribute even when the video is
+        // muted. Set muted again and ask explicitly, so the poster is not the
+        // final state.
+        video.muted = true;
+        const attempt = video.play();
+        if (attempt?.catch) attempt.catch(() => {});
+      };
+      const drop = () => video.remove();
+      if (video.readyState >= 2) {
+        show();
+        start();
+      }
       video.addEventListener("loadeddata", show);
-      video.addEventListener("canplay", show);
+      video.addEventListener("canplay", () => {
+        show();
+        start();
+      });
       video.addEventListener("playing", show);
+      video.addEventListener("error", drop);
+      for (const source of video.querySelectorAll("source")) {
+        source.addEventListener("error", () => {
+          if (video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) drop();
+        });
+      }
+      // If autoplay is blocked, the poster stays visible. The first pointer or
+      // key starts the video, and a tab returning to the foreground resumes it.
+      const retry = () => {
+        if (video.paused) start();
+      };
+      document.addEventListener("pointerdown", retry, { once: true });
+      document.addEventListener("keydown", retry, { once: true });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && video.paused) start();
+      });
     }
   }
   // The why-section photos crossfade on their own, each with a progress dot
