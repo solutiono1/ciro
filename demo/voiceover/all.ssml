@@ -1,0 +1,16 @@
+<speak>
+  <p>A stablecoin payment knows the amount and the address. It does not know the invoice, the reference, or the name you agreed on. When the name is wrong, a person fixes it by hand. The transfer is final. Ciro makes the name the check.</p>
+  <break time="0.8s"/>
+  <p>The payee registers the name they want to be paid under. Capitals and extra spaces still match. Ciro folds the name, then writes it to the contract. The name is public. The wallet signs the registration, and Ciro never holds a key.</p>
+  <break time="0.8s"/>
+  <p>The invoice locks the amount, the reference, the due date, and the name. The payer does not set the amount. They only have to type the name they were told. A later name change does not rewrite an open invoice.</p>
+  <break time="0.8s"/>
+  <p>This is the only decision. A close name looks plausible, but it does not match. Close means the initials and word count match and the length is within two characters. It still does not pay. There is no pay button, and the contract refuses it. The money does not move.</p>
+  <break time="0.8s"/>
+  <p>The exact name matches. The amount is already locked. The payer sees the amount and the fee before signing. The wallet approves the exact amount, then signs the payment. The contract pulls it from the payer and sends it to the payee. The invoice is paid once.</p>
+  <break time="0.8s"/>
+  <p>The receipt carries the payer, the payee, the amount, and the transaction hash. Ciro reads the payment from the chain, not from a database. There is no database to trust. The transaction hash opens on the Aevum explorer.</p>
+  <break time="0.8s"/>
+  <p>The API, the CLI, the MCP server, and the SDK are published. The API and the MCP never hold a key. The CLI signs locally with a key you own. This is testnet only. Ciro holds no funds, and the contract is the record. The source is verified.</p>
+  <break time="0.8s"/>
+</speak>

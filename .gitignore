@@ -15,6 +15,15 @@ web/playwright-report/
 # Local dev artifacts
 .ciro-record/
 
+# Demo media and generated audio (large files stay local)
+demo/recordings/
+demo/*.webm
+demo/*.mp4
+demo/*.wav
+demo/*.mp3
+demo/video-cues.json
+demo/audio/
+
 # npm publish token (never commit)
 .npm-token
 .npm-token.*

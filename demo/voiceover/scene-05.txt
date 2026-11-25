@@ -1,0 +1,1 @@
+The exact name matches. The amount is already locked. The payer sees the amount and the fee before signing. The wallet approves the exact amount, then signs the payment. The contract pulls it from the payer and sends it to the payee. The invoice is paid once.
