@@ -1,0 +1,1 @@
+A stablecoin payment knows the amount and the address. It does not know the invoice, the reference, or the name you agreed on. When the name is wrong, a person fixes it by hand. The transfer is final. Ciro makes the name the check.

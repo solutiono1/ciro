@@ -1,0 +1,75 @@
+{
+  "totalSeconds": 170,
+  "cues": [
+    {
+      "number": "01",
+      "id": "landing",
+      "title": "The wrong-name problem",
+      "file": "scene-01.txt",
+      "targetStart": 0,
+      "targetEnd": 16,
+      "targetSeconds": 16,
+      "narration": "A stablecoin payment knows the amount and the address. It does not know the invoice, the reference, or the name you agreed on. When the name is wrong, a person fixes it by hand. The transfer is final. Ciro makes the name the check."
+    },
+    {
+      "number": "02",
+      "id": "register",
+      "title": "Register the name",
+      "file": "scene-02.txt",
+      "targetStart": 16,
+      "targetEnd": 36,
+      "targetSeconds": 20,
+      "narration": "The payee registers the name they want to be paid under. Capitals and extra spaces still match. Ciro folds the name, then writes it to the contract. The name is public. The wallet signs the registration, and Ciro never holds a key."
+    },
+    {
+      "number": "03",
+      "id": "create",
+      "title": "Create the invoice",
+      "file": "scene-03.txt",
+      "targetStart": 36,
+      "targetEnd": 60,
+      "targetSeconds": 24,
+      "narration": "The invoice locks the amount, the reference, the due date, and the name. The payer does not set the amount. They only have to type the name they were told. A later name change does not rewrite an open invoice."
+    },
+    {
+      "number": "04",
+      "id": "close",
+      "title": "A close name does not pay",
+      "file": "scene-04.txt",
+      "targetStart": 60,
+      "targetEnd": 86,
+      "targetSeconds": 26,
+      "narration": "This is the only decision. A close name looks plausible, but it does not match. Close means the initials and word count match and the length is within two characters. It still does not pay. There is no pay button, and the contract refuses it. The money does not move."
+    },
+    {
+      "number": "05",
+      "id": "pay",
+      "title": "The exact name pays",
+      "file": "scene-05.txt",
+      "targetStart": 86,
+      "targetEnd": 118,
+      "targetSeconds": 32,
+      "narration": "The exact name matches. The amount is already locked. The payer sees the amount and the fee before signing. The wallet approves the exact amount, then signs the payment. The contract pulls it from the payer and sends it to the payee. The invoice is paid once."
+    },
+    {
+      "number": "06",
+      "id": "receipt",
+      "title": "The receipt",
+      "file": "scene-06.txt",
+      "targetStart": 118,
+      "targetEnd": 142,
+      "targetSeconds": 24,
+      "narration": "The receipt carries the payer, the payee, the amount, and the transaction hash. Ciro reads the payment from the chain, not from a database. There is no database to trust. The transaction hash opens on the Aevum explorer."
+    },
+    {
+      "number": "07",
+      "id": "tools",
+      "title": "Build and safety",
+      "file": "scene-07.txt",
+      "targetStart": 142,
+      "targetEnd": 170,
+      "targetSeconds": 28,
+      "narration": "The API, the CLI, the MCP server, and the SDK are published. The API and the MCP never hold a key. The CLI signs locally with a key you own. This is testnet only. Ciro holds no funds, and the contract is the record. The source is verified."
+    }
+  ]
+}

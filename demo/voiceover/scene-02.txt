@@ -1,0 +1,1 @@
+The payee registers the name they want to be paid under. Capitals and extra spaces still match. Ciro folds the name, then writes it to the contract. The name is public. The wallet signs the registration, and Ciro never holds a key.
