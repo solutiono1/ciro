@@ -1,0 +1,59 @@
+name: Pilot request
+description: Try Ciro on Aevum testnet with a real or realistic stablecoin invoice.
+title: "[Pilot]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying Ciro. Do not post a private key, seed phrase, or API key in this issue.
+        A GitHub handle is enough for a first reply.
+
+  - type: input
+    id: role
+    attributes:
+      label: Role or company
+      description: Freelancer, agency, DAO, supplier, accountant, or something else.
+      placeholder: "Small design agency"
+    validations:
+      required: true
+
+  - type: input
+    id: volume
+    attributes:
+      label: Stablecoin invoices per month
+      placeholder: "8"
+    validations:
+      required: true
+
+  - type: input
+    id: assets
+    attributes:
+      label: Assets and networks you use
+      placeholder: "USDC on Base, USDT on Tron"
+    validations:
+      required: true
+
+  - type: textarea
+    id: process
+    attributes:
+      label: How you invoice and reconcile today
+      placeholder: "Invoice PDF by email, payment to a wallet, screenshot the explorer link, paste it into a spreadsheet."
+    validations:
+      required: true
+
+  - type: textarea
+    id: pain
+    attributes:
+      label: The part that breaks
+      description: Wrong name, wrong address, wrong chain, late payment, missing receipt, or something else.
+      placeholder: "A client paid the right amount to the wrong copied address. We could not recover it."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: call
+    attributes:
+      label: Next step
+      options:
+        - label: I can do a 15–20 minute feedback call after I try one invoice.
+          required: false

@@ -7,6 +7,7 @@ import {
   bindLanding,
   bindPay,
   bindProfile,
+  bindReceipt,
   bindSettings,
   bindShell,
   bindStart,
@@ -128,6 +129,7 @@ async function go() {
     }
     if (parts[0] === "receipt" && parts[1]) {
       draw(await receiptPage(parts[1]));
+      bindReceipt();
       return;
     }
     if (!session.account) {

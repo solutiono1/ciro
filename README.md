@@ -22,11 +22,15 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 [Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops an app-flow cut of the same demo, muted.
 
+Try the open demo invoice: [invoice 10](https://ciro-a9s.pages.dev/#/pay/10).
+
 The screenshots are from the live Aevum deployment (chain 44005). The transactions in the proof table are from it.
 
 ## Aevum Builder Challenge
 
 Ciro is built for the Aevum Builder Challenge #1 in **Invoice Payments** and **Confirmation of Payee**. The submission copy, judge test script, and checklist are in [docs/submission/DORAHACKS.md](docs/submission/DORAHACKS.md).
+
+If you invoice in stablecoins and want a testnet pilot, open a [pilot request](https://github.com/solutiono1/ciro/issues/new?template=pilot.yml). The go-to-market and pilot plan is in [docs/growth/GTM.md](docs/growth/GTM.md). No design partners or real volume yet; the plan is the next step.
 
 ---
 
@@ -74,6 +78,8 @@ The receipt is the record. It carries the amount, the payer, the payee name, the
 <div align="center">
 <img src="docs/screens/receipt.png" width="880" alt="Ciro receipt - amount, payer, payee name, and transaction" />
 </div>
+
+Download the receipt as CSV or print it from the receipt page. The file contains the invoice, payee, payer, amount, fee, reference, paid time, network, and transaction hash. It is generated in the browser; the API is not involved.
 
 ## Build on it
 
@@ -183,6 +189,8 @@ CIRO_API_URL=http://127.0.0.1:8787 npx @getciro/mcp
 From the repo, the same server is `node packages/mcp/bin/ciro-mcp.js`.
 
 Tools: `ciro_check`, `ciro_prepare_invoice`, `ciro_prepare_pay`, `ciro_receipt`. A close or unknown name returns no transaction.
+
+See [examples/mcp-agent.mjs](examples/mcp-agent.mjs) for a real agent session against the live API. It checks a name, prepares an invoice, prepares a payment, and reads a receipt. It never receives a key and never signs. The transcript is in [examples/README.md](examples/README.md).
 
 ## Quickstart
 

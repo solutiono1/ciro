@@ -18,6 +18,10 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 
 - [Changelog](operations/CHANGELOG.md) — notable changes.
 
+## Growth
+
+- [GTM and pilot plan](growth/GTM.md) — positioning, pilot offer, channels, pricing, and metrics.
+
 ## Submission
 
 - [DoraHacks copy](submission/DORAHACKS.md) — the project description, judge test script, and checklist.

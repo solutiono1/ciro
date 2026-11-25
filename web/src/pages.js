@@ -1,7 +1,7 @@
 import { decodeEventLog } from "viem";
 import { ciroAbi } from "../../packages/api/src/abi.js";
 import { api } from "./api.js";
-import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, shortAddress, shortHash, when } from "./format.js";
+import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, receiptCsv, shortAddress, shortHash, when } from "./format.js";
 import { payDecision } from "./pay-state.js";
 import {
   apiUrl,
@@ -138,6 +138,7 @@ function footer() {
           <a href="#/docs">Docs</a>
           <a href="#/docs">API and CLI</a>
           <a href="#/docs">Contract</a>
+          <a href="https://github.com/solutiono1/ciro/issues/new?template=pilot.yml" rel="noopener">Pilot ${icon("external", "ic-16")}</a>
         </div>
         <div class="foot-col">
           <p class="foot-title">Network</p>
@@ -422,6 +423,7 @@ export function landing() {
             <a class="btn btn-primary btn-lg" href="#/start"><span>Get started</span>${arrow()}</a>
             <button class="btn btn-lg" type="button" data-scroll="lookup"><span>I have a link</span>${arrow()}</button>
           </div>
+          <p class="fineprint hero-note">New to Aevum? <a href="#/pay/10">See a live invoice</a> or <a href="https://faucet.qday.info/en" target="_blank" rel="noopener">get test funds</a>.</p>
         </div>
       </section>
       ${appStage()}
@@ -758,14 +760,33 @@ export function bindDocs() {
 
 /* Onboarding */
 
+function onboardingHelp() {
+  const faucet = faucetUrl() || "https://faucet.qday.info/en";
+  const walletAction = provider()
+    ? `<button class="btn" type="button" id="start-add-network">Add Aevum ${arrow()}</button>`
+    : `<a class="btn" href="https://metamask.io/download/" target="_blank" rel="noopener">Install a wallet ${icon("external", "ic-16")}</a>`;
+  return `<div class="card card-pad onboard-card">
+    <p class="bracket">[ First time? ]</p>
+    <h3 class="h3">Add Aevum and get test funds.</h3>
+    <p class="lede">You need tQDAY for gas and tUSD8 to pay. Both are free on testnet. You can also look at a live invoice without a wallet.</p>
+    <div class="actions">
+      ${walletAction}
+      <a class="btn" href="${esc(faucet)}" target="_blank" rel="noopener">Get test funds ${icon("external", "ic-16")}</a>
+      <a class="btn" href="#/pay/10">See a live invoice ${arrow()}</a>
+    </div>
+    <p id="start-status" class="fineprint" role="status"></p>
+  </div>`;
+}
+
 export async function startPage() {
   if (!provider()) {
     return frame(`
       <div class="page-head">
         <p class="bracket">[ Onboarding ]</p>
         <h2 class="h2">Connect a wallet</h2>
-        <p class="lede">Install a wallet in this browser, then reload the page.</p>
+        <p class="lede">Install a wallet in this browser, then reload the page. You can still look at a live invoice without one.</p>
       </div>
+      ${onboardingHelp()}
     `, "/start");
   }
   if (!session.account) {
@@ -781,6 +802,7 @@ export async function startPage() {
           <p id="form-error" class="bad"></p>
         </div>
       </div>
+      ${onboardingHelp()}
     `, "/start");
   }
   if (session.meta && session.chainId !== session.meta.chainId) {
@@ -858,6 +880,16 @@ export function bindStart(go) {
       await go();
     } catch (err) {
       if (error) error.textContent = formMessage(err);
+    }
+  });
+  const startStatus = document.querySelector("#start-status");
+  document.querySelector("#start-add-network")?.addEventListener("click", async () => {
+    if (startStatus) startStatus.textContent = "Asking the wallet to add Aevum.";
+    try {
+      await addNetwork();
+      if (startStatus) startStatus.textContent = "Aevum is in the wallet. Switch to it before you sign.";
+    } catch (err) {
+      if (startStatus) startStatus.textContent = err.message || "The wallet refused the network.";
     }
   });
   const form = document.querySelector("#register");
@@ -1353,6 +1385,20 @@ export async function receiptPage(id) {
   }
   const href = verified ? explorerTx(hash) : null;
   const payeeHref = explorerAddress(payee);
+  const receiptData = {
+    id: String(id),
+    payee: payeeName,
+    payeeAddress: payee,
+    payer,
+    amount: formatUnits(amount),
+    fee: formatFee(fee),
+    net: formatUnits(net),
+    symbol,
+    reference: reference || "",
+    paidAt: when(paidAt),
+    chainId: String(chainId),
+    transactionHash: hash || "",
+  };
   return docShell(`
     <main class="doc-wrap pub-main">
       <div class="card deed">
@@ -1379,11 +1425,34 @@ export async function receiptPage(id) {
           </dl>
         </div>
         <div class="doc-body">
+          <div class="actions receipt-actions">
+            <button class="btn" type="button" id="receipt-csv">Download CSV</button>
+            <button class="btn" type="button" id="receipt-print">Print receipt</button>
+          </div>
           <p class="fineprint ${verified ? "" : "warn"}">${verified ? "Verified on chain." : "This receipt could not be verified on chain. Check the transaction before you file it."}</p>
+          <div id="receipt-data" data-receipt="${esc(JSON.stringify(receiptData))}" hidden></div>
         </div>
       </div>
     </main>
   `);
+}
+
+export function bindReceipt() {
+  const data = document.querySelector("#receipt-data");
+  document.querySelector("#receipt-csv")?.addEventListener("click", () => {
+    if (!data?.dataset.receipt) return;
+    const receipt = JSON.parse(data.dataset.receipt);
+    const blob = new Blob([receiptCsv(receipt)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `ciro-receipt-${receipt.id}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  document.querySelector("#receipt-print")?.addEventListener("click", () => window.print());
 }
 
 /* History */

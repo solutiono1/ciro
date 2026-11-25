@@ -344,6 +344,32 @@ request id. Exportable for an audit. No PII in the log.
 - A hosted team dashboard and a read-only public invoice view.
 - A mobile PWA; the current web app is responsive but not installable.
 
+## 7.5 Growth backlog: v1 now, v2 next
+
+The first four are in v1 now. Everything else is scheduled, not promised for
+the hackathon. The go-to-market and pilot plan is in
+[docs/growth/GTM.md](../growth/GTM.md).
+
+| Growth item | v1 now | v2 phase | Success signal |
+|---|---|---|---|
+| Live invoice + add-network/faucet onboarding | Done | — | A first-time visitor reaches the pay screen without a funded wallet |
+| Receipt CSV and print | Done | PDF in 2.1 | A payee files a receipt without a screenshot |
+| MCP agent example and transcript | Done | x402 and scoped session keys in 2.3 | An agent prepares; a human signs |
+| Pilot intake and GTM plan | Done | Case studies in phases 1–2 | 5–10 pilots, then 3 studies |
+| QR codes and OG invoice previews | — | 2.1 | Shared-link click-through |
+| Email and Telegram viewed/paid/overdue notices | — | 2.1 | Overdue recovery |
+| Address book, saved clients, duplicate invoice | — | 2.1 | Time to repeat invoice |
+| Receipt PDF and accounting export (Xero/QuickBooks) | — | 2.2 | Export adoption |
+| Team accounts, roles, approvals, audit log | — | 2.2 | Team activation |
+| Recurring invoices and reminders | — | 2.2 | Repeat conversion |
+| Partial payments, credits, and refunds | — | 2.3 | Reconciliation completeness |
+| Webhooks, embedded checkout, partner API | — | 2.2 | API adoption |
+| PWA, WalletConnect, passkeys, smart accounts | — | 2.3 | Mobile completion |
+| Agent x402 and scoped session keys | — | 2.3 | Agent-paid volume |
+| Public stats and the Control Room | — | 2.1 | Trust and support load |
+| SEO, templates, case studies, design partners | — | Ongoing | Organic traffic and pipeline |
+| Team pricing and the fee experiment | — | 2.3 | Net revenue per paid invoice |
+
 ## 8. Growth and mainnet
 
 - **Mainnet:** QDay mainnet is scheduled for Q1 2027. Deploy the audited v2

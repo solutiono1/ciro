@@ -25,6 +25,8 @@ key that can move funds.
 | API | <https://ciro-a9s.pages.dev/api/v1/meta> |
 | Contract | [`0x4AceB37ecAce160B4363111460020c2d088C529C`](https://explorer-test.qday.info/address/0x4AceB37ecAce160B4363111460020c2d088C529C?tab=contract) |
 | Demo video | <https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4> |
+| Open demo invoice | <https://ciro-a9s.pages.dev/#/pay/10> |
+| MCP agent example | [examples/mcp-agent.mjs](../../examples/mcp-agent.mjs) |
 | Source | <https://github.com/solutiono1/ciro> |
 | Audit | [docs/security/REVIEW.md](../security/REVIEW.md) |
 | Architecture | [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md) |

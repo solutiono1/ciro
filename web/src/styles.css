@@ -456,6 +456,8 @@ a.row:hover { background: var(--surface-inset); }
 .hero .display { max-width: 18ch; margin: 0 auto; }
 .hero .lede { max-width: 48ch; margin: 24px auto 0; font-size: 1.125rem; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; justify-content: center; }
+.hero-note { margin-top: 18px; }
+.onboard-card { margin-top: 24px; }
 
 /* The final demo is the whole landing visual: backdrop and app together.
    There is no browser bar, wallpaper, or drawn preview around it. */
@@ -991,4 +993,12 @@ code { background: var(--surface-inset); padding: 1px 5px; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+
+@media print {
+  header, footer, .receipt-actions { display: none !important; }
+  body { background: #fff; }
+  .doc-wrap { max-width: none; padding: 0; }
+  .card.deed { border: 0; box-shadow: none; }
 }

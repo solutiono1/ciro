@@ -28,6 +28,31 @@ export function feeLine(amount, feeBps) {
   return `Fee ${formatFee(fee)}`;
 }
 
+function csvCell(value) {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+// The accountant-friendly form of the on-chain receipt. This is a local
+// export: no API call, no database, no key.
+export function receiptCsv(receipt) {
+  const rows = [
+    ["Invoice", receipt.id],
+    ["Payee", receipt.payee],
+    ["Payee address", receipt.payeeAddress],
+    ["Payer", receipt.payer],
+    ["Amount", receipt.amount],
+    ["Fee", receipt.fee],
+    ["Net to payee", receipt.net],
+    ["Symbol", receipt.symbol],
+    ["Reference", receipt.reference],
+    ["Paid", receipt.paidAt],
+    ["Network", receipt.chainId],
+    ["Transaction", receipt.transactionHash],
+  ];
+  return ["Field,Value", ...rows.map(([name, value]) => `${csvCell(name)},${csvCell(value)}`)].join("\n") + "\n";
+}
+
 export function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
