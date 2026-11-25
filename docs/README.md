@@ -6,6 +6,7 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 
 - [PRD](product/PRD.md) — problem, user, the one flow, and what v1 refuses to be.
 - [UX](design/UX.md) — screens, flows, and the design rules.
+- [v2 plan](product/V2_PLAN.md) — Control Room, account deletion, pause and suspension, contract v2, and mainnet.
 
 ## Build
 
@@ -16,6 +17,10 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 ## Operations
 
 - [Changelog](operations/CHANGELOG.md) — notable changes.
+
+## Submission
+
+- [DoraHacks copy](submission/DORAHACKS.md) — the project description, judge test script, and checklist.
 
 ## Live
 

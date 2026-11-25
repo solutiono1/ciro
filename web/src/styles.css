@@ -457,7 +457,7 @@ a.row:hover { background: var(--surface-inset); }
 .hero .lede { max-width: 48ch; margin: 24px auto 0; font-size: 1.125rem; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; justify-content: center; }
 
-/* The supplied clip is the whole landing visual: backdrop and app together.
+/* The final demo is the whole landing visual: backdrop and app together.
    There is no browser bar, wallpaper, or drawn preview around it. */
 .stage-wrap { margin-top: 56px; }
 @media (min-width: 980px) { .stage-wrap { margin-top: 72px; } }
@@ -465,7 +465,7 @@ a.row:hover { background: var(--surface-inset); }
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1584 / 1080;
+  aspect-ratio: 16 / 9;
   background: transparent;
 }
 .section { border-top: 1px solid var(--hairline); padding: 80px 0; }

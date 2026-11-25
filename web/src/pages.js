@@ -297,7 +297,7 @@ export function bindShell() {
 function appStage() {
   return `<section class="stage-wrap" aria-label="A preview of the Ciro app">
     <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" poster="/media/ciro-demo-poster.jpg" aria-hidden="true" tabindex="-1">
-      <source src="/media/ciro-demo-v3.mp4" type="video/mp4" />
+      <source src="/media/ciro-demo-landing.mp4" type="video/mp4" />
     </video>
   </section>`;
 }

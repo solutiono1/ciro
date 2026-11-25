@@ -20,9 +20,13 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 ## Demo
 
-[Watch the 45 second app flow](https://ciro-a9s.pages.dev/media/ciro-demo-v3.mp4). The same clip plays on the landing.
+[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops an app-flow cut of the same demo, muted.
 
-The UI screenshots use a local test chain. The live Aevum deployment is linked above, and the transactions in the proof table are from it.
+The screenshots are from the live Aevum deployment (chain 44005). The transactions in the proof table are from it.
+
+## Aevum Builder Challenge
+
+Ciro is built for the Aevum Builder Challenge #1 in **Invoice Payments** and **Confirmation of Payee**. The submission copy, judge test script, and checklist are in [docs/submission/DORAHACKS.md](docs/submission/DORAHACKS.md).
 
 ---
 
@@ -215,7 +219,7 @@ npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CH
 
 ## Tests
 
-- `cd contracts && forge test` - 11 passed.
+- `cd contracts && forge test` - 20 passed.
 - `npm test` - shared, API, CLI, MCP, and web unit tests.
 - `npm run e2e -w @getciro/web` - the pay flow and the public pages. A close name has no pay button; an exact name pays.
 
@@ -226,10 +230,11 @@ Ciro is deployed on QDay Aevum testnet at `0x4AceB37ecAce160B4363111460020c2d088
 | What | Transaction |
 |---|---|
 | Deploy | [`0x48cb3cd4`](https://explorer-test.qday.info/tx/0x48cb3cd4640ac251430de2f71fbcf8559236ab8cd3947c37c7ac5a872d0a8b6e) |
-| Register "Ada Okonkwo" | [`0xe4bde111`](https://explorer-test.qday.info/tx/0xe4bde11146715b4f95bb7f5b8b79e9ffdfdb963310e8d18e990757ce64a99d05) |
-| Create invoice 1 | [`0xddef8ca9`](https://explorer-test.qday.info/tx/0xddef8ca9ee32f55a3196a5c41457625ff8657c9a5101a2bbe294f70ff3b304de) |
-| Exact name pays | [`0xfb5abc43`](https://explorer-test.qday.info/tx/0xfb5abc4355a35693fb25c3d8fa2516f31213ef276eed02bb28fdcb4c124bfe96) |
-| Wrong name is refused | [`0xe4c01ead`](https://explorer-test.qday.info/tx/0xe4c01ead88c8c56632332222fa920d4f7823d09d45737e8f499cdd904a6554db) (reverted) |
+| Register "Elena Rossi" | [`0x06b493b2`](https://explorer-test.qday.info/tx/0x06b493b2a5e74087eef3b114a98ee6be6a5d4ca4ad9deb5da996b31e303f07aa) |
+| Create invoice 8 | [`0x7ba8b7f4`](https://explorer-test.qday.info/tx/0x7ba8b7f46a5d2ef0112dca53548d24203df1385dfd4fe26eed02fce145bf8d91) |
+| Exact name pays invoice 8 | [`0x003e61d3`](https://explorer-test.qday.info/tx/0x003e61d3f9f802792a25f5720b039d31d9bec7dcc29343a49c948f5134f396cd) |
+
+The close-name refusal is shown in the demo and covered by `CiroAudit.t.sol`; a refused payment reverts and moves no funds.
 
 ## Known limits
 
@@ -253,6 +258,8 @@ Ciro is deployed on QDay Aevum testnet at `0x4AceB37ecAce160B4363111460020c2d088
 - Ship a hosted invoice dashboard for small teams, with the SDK and CLI as the integration path.
 
 Revenue comes from the settlement fee on paid invoices. Reads, the SDK, and the CLI stay free. The first distribution is QDay builders and small agencies that invoice in stablecoins; the SDK and MCP are the path into agent workflows.
+
+The full v2 plan, including the Control Room (public stats and an internal operations console), account deletion, pause and suspension, the indexer, the fee, and the mainnet path, is in [docs/product/V2_PLAN.md](docs/product/V2_PLAN.md).
 
 ## Security
 
