@@ -8,15 +8,56 @@ const created = parseAbiItem(
 );
 const balanceOf = parseAbiItem("function balanceOf(address) view returns (uint256)");
 
+const DISCONNECTED_KEY = "ciro.walletDisconnected";
+let disconnectedInMemory = false;
+
+// An explicit disconnect must survive navigation and reloads. Many wallets
+// keep returning the same account from eth_accounts after a revoke (or do not
+// support wallet_revokePermissions at all), so asking the wallet again is not
+// enough. Only an explicit Connect clears this intent.
+function walletWasDisconnected() {
+  if (disconnectedInMemory) return true;
+  try {
+    return localStorage.getItem(DISCONNECTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markWalletDisconnected() {
+  disconnectedInMemory = true;
+  try {
+    localStorage.setItem(DISCONNECTED_KEY, "1");
+  } catch {
+    // The in-memory flag still protects this page.
+  }
+}
+
+function clearWalletDisconnected() {
+  disconnectedInMemory = false;
+  try {
+    localStorage.removeItem(DISCONNECTED_KEY);
+  } catch {
+    // Nothing else to clear.
+  }
+}
+
 export function provider() {
   return window.ethereum ?? null;
 }
 
 export async function refreshWallet() {
+  if (walletWasDisconnected()) {
+    session.account = null;
+    session.chainId = null;
+    session.payee = null;
+    return;
+  }
   const ethereum = provider();
   if (!ethereum) {
     session.account = null;
     session.chainId = null;
+    session.payee = null;
     return;
   }
   const accounts = await ethereum.request({ method: "eth_accounts" });
@@ -33,8 +74,10 @@ export async function connect() {
   if (!ethereum) throw new Error("This browser has no Ethereum wallet.");
   const accounts = await ethereum.request({ method: "eth_requestAccounts" });
   if (!accounts[0]) throw new Error("The wallet did not share an account.");
+  const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+  clearWalletDisconnected();
   session.account = getAddress(accounts[0]);
-  session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+  session.chainId = chainId;
   if (!ethereum.__ciroListening) {
     ethereum.__ciroListening = true;
     ethereum.on?.("accountsChanged", () => {
@@ -44,15 +87,18 @@ export async function connect() {
   }
 }
 
-export async function disconnect() {
+export function disconnect() {
+  // Mark first, even if the wallet ignores the revoke or the popup hangs.
+  markWalletDisconnected();
   session.account = null;
   session.chainId = null;
   session.payee = null;
   try {
-    await provider()?.request({
+    const request = provider()?.request({
       method: "wallet_revokePermissions",
       params: [{ eth_accounts: {} }],
     });
+    Promise.resolve(request).catch(() => {});
   } catch {
     // Some wallets have no revoke. The page still forgets the account.
   }

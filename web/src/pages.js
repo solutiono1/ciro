@@ -779,12 +779,20 @@ function onboardingHelp() {
 }
 
 export async function startPage() {
+  let notice = "";
+  try {
+    notice = sessionStorage.getItem("ciro.walletNotice") || "";
+    sessionStorage.removeItem("ciro.walletNotice");
+  } catch {
+    notice = "";
+  }
   if (!provider()) {
     return frame(`
       <div class="page-head">
         <p class="bracket">[ Onboarding ]</p>
         <h2 class="h2">Connect a wallet</h2>
         <p class="lede">Install a wallet in this browser, then reload the page. You can still look at a live invoice without one.</p>
+        ${notice ? `<p class="fineprint">${esc(notice)}</p>` : ""}
       </div>
       ${onboardingHelp()}
     `, "/start");
@@ -795,6 +803,7 @@ export async function startPage() {
         <p class="bracket">[ Onboarding ]</p>
         <h2 class="h2">Connect a wallet</h2>
         <p class="lede">Ciro holds no key. Your wallet signs. A payer who only has a link can connect later, on the invoice.</p>
+        ${notice ? `<p class="fineprint">${esc(notice)}</p>` : ""}
       </div>
       <div class="card form">
         <div class="form-foot">
@@ -1546,7 +1555,15 @@ export function bindWallet(go) {
   });
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
     await disconnect();
-    location.hash = "#/";
+    try {
+      sessionStorage.setItem(
+        "ciro.walletNotice",
+        "Wallet disconnected. Ciro will not reconnect the old account. Press Connect and choose the account you want.",
+      );
+    } catch {
+      // The in-memory disconnect flag still applies.
+    }
+    location.hash = "#/start";
   });
 }
 
