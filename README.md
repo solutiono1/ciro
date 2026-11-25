@@ -20,7 +20,7 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 ## Demo
 
-[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops an app-flow cut of the same demo, muted.
+[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops the backed app-flow cut, muted.
 
 Try the open demo invoice: [invoice 10](https://ciro-a9s.pages.dev/#/pay/10).
 

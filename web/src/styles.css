@@ -467,7 +467,7 @@ a.row:hover { background: var(--surface-inset); }
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1718 / 1080;
   background: transparent;
 }
 .section { border-top: 1px solid var(--hairline); padding: 80px 0; }
