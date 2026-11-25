@@ -3,7 +3,17 @@ import { createInterface } from "node:readline";
 import { join } from "node:path";
 import { createPublicClient, createWalletClient, defineChain, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { parseHuman } from "../../shared/src/money.js";
+
+// Mirrors packages/shared/src/money.js. Kept inside the published CLI package so
+// `npx @getciro/cli` does not depend on a monorepo-only path.
+const SCALE = 1_000_000n;
+function parseHuman(input) {
+  if (typeof input !== "string" || !/^\d+(\.\d{1,6})?$/.test(input)) {
+    throw new Error("bad_amount");
+  }
+  const [whole, frac = ""] = input.split(".");
+  return BigInt(whole) * SCALE + BigInt(frac.padEnd(6, "0"));
+}
 
 const USAGE = `ciro register <name>
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01

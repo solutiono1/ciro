@@ -20,7 +20,7 @@ The pay screen has three visible results before any signature:
 | Result | What the payer sees | Button |
 |---|---|---|
 | Exact | The name matches the account on this invoice. | Pay the exact amount. |
-| Close | The name is almost the registered one. The payment will revert. | No pay button. Edit the name. |
+| Close | Initials and word count match, length within two characters. The payment will revert. | No pay button. Edit the name. |
 | None | This name is not the account. | No pay button. |
 
 The button is absent until the result is exact. A disabled button that still looks like pay is how people lose money.

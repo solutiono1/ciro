@@ -12,6 +12,11 @@ export function shortAddress(address) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+export function shortHash(hash) {
+  if (!hash) return "";
+  return `${hash.slice(0, 10)}…${hash.slice(-6)}`;
+}
+
 export function when(seconds) {
   if (seconds == null) return "";
   return new Date(Number(seconds) * 1000).toISOString().replace(".000Z", "Z");

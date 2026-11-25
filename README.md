@@ -18,6 +18,14 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 ---
 
+## Demo
+
+[Watch the 45 second app flow](https://ciro-a9s.pages.dev/media/ciro-demo-v3.mp4). The same clip plays on the landing.
+
+The UI screenshots use a local test chain. The live Aevum deployment is linked above, and the transactions in the proof table are from it.
+
+---
+
 ## The idea
 
 A stablecoin transfer carries a sender, a receiver, and an amount. It does not carry the invoice, it does not check the name the payer was given, and it leaves no receipt an accountant can file. When the amount is short, the name is wrong, or the payment is late, a person repairs it by hand. The transfer is final.
@@ -44,7 +52,7 @@ A wallet address is easy to copy wrong and hard to check. A registered name is s
 | Result | What the payer sees | Button |
 |---|---|---|
 | Exact | The name matches the invoice | Pay the exact amount |
-| Close | One letter or space off | No pay button |
+| Close | Initials and word count match, length within two characters | No pay button |
 | Unknown | Not the registered name | No pay button |
 
 ## Dashboard
