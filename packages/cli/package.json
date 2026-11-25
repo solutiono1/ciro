@@ -19,7 +19,7 @@
   ],
   "type": "module",
   "bin": {
-    "ciro": "./bin/ciro.js"
+    "ciro": "bin/ciro.js"
   },
   "files": [
     "bin",

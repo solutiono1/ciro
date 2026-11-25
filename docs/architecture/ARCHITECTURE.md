@@ -42,7 +42,7 @@ flowchart TB
   Token -->|to payee| Payee
 ```
 
-Money never sits in the API. A signature happens in the wallet or in the CLI's local key. MCP and the SDK, when they exist, only prepare. They do not hold a paying key.
+Money never sits in the API. A signature happens in the wallet or in the CLI's local key. MCP and the SDK, which are published, only prepare. They do not hold a paying key.
 
 The web app may also read the chain directly for the invoice on screen. Lists, history, and other clients go through the API so there is one read model.
 
@@ -100,4 +100,4 @@ A small web client. It adds chain 44005 if the wallet is elsewhere. It does not 
 
 ## Deploy
 
-One deployment on Aevum testnet for the contest. Address and commit hash go in the README when they exist. Fee recipient is set, fee is zero. Explorer verification may be broken on Aevum. The README carries the address, the commit, and a handful of transaction hashes either way.
+One deployment on Aevum testnet for the contest. The address, deploy transaction, and proof transactions are in the README. Fee recipient is set, fee is zero. The source is verified on the Aevum explorer.
