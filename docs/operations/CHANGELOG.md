@@ -9,7 +9,7 @@
 
 ## 2026-11-23 - Landing unslop pass
 
-- The landing hero is now the split UX.md asks for: copy and two actions on the left, a live name-check card on the right. The card types "Ada Okonkwo", shows exact, close, or none with the same fold rule the API uses, and reveals the pay button only on exact. `e2e/public.test.js` now asserts that a capital and a double space still pay and that another name does not.
+- The landing hero is now the split UX.md asks for: copy and two actions on the left, a live name-check card on the right. The card types a demo name, shows exact, close, or none with the same fold rule the API uses, and reveals the pay button only on exact. `e2e/public.test.js` now asserts that a capital and a double space still pay and that another name does not.
 - Removed the violet-to-teal radial wallpaper, the noise overlay, and the large colored shadow behind the app preview. The preview sits on the quiet rail panel with a hairline.
 - Removed the auto-playing demo video. The file recorded the landing page itself, so the preview showed Ciro inside Ciro. The drawn dashboard preview stands alone until a real recording exists.
 - The three steps use line icons from the app's own set instead of the three Fluent 3D PNGs.

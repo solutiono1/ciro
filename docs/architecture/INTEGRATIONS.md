@@ -25,8 +25,8 @@ Public:
 
 - `GET /v1/invoices/:id`
 - `GET /v1/receipts/:id` — 404 `not_paid` until the invoice is paid. The body then includes `transactionHash` from the `Paid` log when that log is found.
-- `POST /v1/check` `{ "payee": "0x…", "name": "Ada Okonkwo" }` → `{ "result": "exact" | "close" | "none" }` against the payee's current registration.
-- `POST /v1/invoices/:id/check` `{ "name": "Ada Okonkwo" }` against the snapshot locked on that invoice. `pay` uses the snapshot. This route exists so a client can refuse the right name.
+- `POST /v1/check` `{ "payee": "0x…", "name": "Elena Rossi" }` → `{ "result": "exact" | "close" | "none" }` against the payee's current registration.
+- `POST /v1/invoices/:id/check` `{ "name": "Elena Rossi" }` against the snapshot locked on that invoice. `pay` uses the snapshot. This route exists so a client can refuse the right name.
 - `GET /v1/payees/:address` → `{ "address", "registered", "name" }`. The name is public by design.
 - `GET /v1/payees/:address/invoices` — at most 100 invoices, with `truncated` if there are more.
 
@@ -58,10 +58,10 @@ Price, later: creating an invoice through the API can be free under a monthly co
 Binary name `ciro`.
 
 ```
-ciro register "Ada Okonkwo"
+ciro register "Elena Rossi"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
-ciro check --payee 0x… --name "Ada Okonkwo"
-ciro pay 4 --name "Ada Okonkwo"
+ciro check --payee 0x… --name "Elena Rossi"
+ciro pay 4 --name "Elena Rossi"
 ciro receipt 4
 ciro allow 0x… --cap 500 --expiry 2026-12-31
 ciro revoke 0x…
