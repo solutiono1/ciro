@@ -100,6 +100,12 @@ export async function handleFaucet(env, body) {
       const data = encodeFunctionData({ abi: TOKEN_ABI, functionName: "transfer", args: [to, tokenAmount] });
       sent.tokenTx = await walletClient.sendTransaction({ to: token, data, nonce });
     }
+    // Wait for the receipts so the page can refresh into the funded state
+    // immediately after the response, instead of racing the indexer.
+    for (const hash of [sent.gasTx, sent.tokenTx].filter(Boolean)) {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 25_000 });
+      if (receipt.status !== "success") throw new Error("faucet transaction reverted");
+    }
     claims.set(to.toLowerCase(), Date.now());
     return result(200, {
       ...sent,
