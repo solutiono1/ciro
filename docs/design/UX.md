@@ -145,9 +145,9 @@ The landing may use photos and 3D icons because it is public marketing. The app 
 
 **Profile.** The registered name, the address it is bound to, and change name. Changing name signs `register` again. Open invoices keep the name that was registered at payment time on the receipt. Say that before they sign the change.
 
-**Settings.** Allowances: spender, cap, expiry, revoke, in the sentence from the allowance screen. Fee: zero on this deployment, and the 0.5% rule for a later priced deployment, written once. Nothing else. No notification preferences until there is something to notify.
+**Settings.** Allowances: spender, cap, expiry, revoke, in the sentence from the allowance screen. Fee: zero on this deployment. A future priced deployment sets the fee at deploy, the contract caps it at 1%, and the API shows it before signing. Nothing else. No notification preferences until there is something to notify.
 
-**Developers.** Inside the dashboard, for the payee who wants to integrate. Contest build: the deployment addresses, the network, the fee, an add-network action, a link to the docs, the API base URL, and the CLI commands that match the buttons. MCP and the SDK are listed as next, not as live buttons, until those ships exist. No API key in v1. Reads of an invoice are public. Writes return an unsigned transaction.
+**Developers.** Inside the dashboard, for the payee who wants to integrate. Contest build: the deployment addresses, the network, the fee, an add-network action, a link to the docs, the API base URL, and the CLI commands that match the buttons. MCP and the SDK are listed as published. No API key in v1. Reads of an invoice are public. Writes return an unsigned transaction.
 
 ## Not in v1
 

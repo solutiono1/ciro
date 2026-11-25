@@ -51,7 +51,7 @@ Stable error codes include `bad_request`, `bad_address`, `bad_amount`, `bad_due`
 
 No private keys. No "we broadcast for you" in v1.
 
-Price, later: creating an invoice through the API can be free under a monthly count and metered after that. The 0.5% is on settlement, in the contract, not in the API. Document the meter when it exists. Do not invent a billing system in the contest.
+Price, later: creating an invoice through the API can be free under a monthly count and metered after that. A settlement fee is set at deploy and capped at 1% by the contract; 0.5% is a planned setting, not a live one. Document the meter when it exists. Do not invent a billing system in the contest.
 
 ## CLI
 

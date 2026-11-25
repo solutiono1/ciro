@@ -63,7 +63,7 @@ A third party can create an invoice and learn that it was paid without hosting o
 
 ## Fee
 
-Shown before confirm. Zero on the contest deployment. 0.5% is the planned price on a priced deployment. A transfer that does not go through an invoice is not charged, because we never see it.
+Shown before confirm. Zero on the contest deployment. A priced deployment sets a fee at deploy, capped at 1% by the contract; 0.5% is one planned setting. A transfer that does not go through an invoice is not charged, because we never see it.
 
 ## Success that is not the prize
 

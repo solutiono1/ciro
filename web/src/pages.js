@@ -1551,7 +1551,7 @@ export async function settingsPage() {
       ${row.revoked ? "" : `<button class="btn btn-sm revoke" type="button" data-spender="${esc(row.spender)}">Revoke</button>`}
     </div>`).join("");
   const priced = (session.meta?.feeBps ?? 0) === 0
-    ? "This deployment charges 0. A later priced deployment charges 0.5%, shown before the payer confirms."
+    ? "This deployment charges 0. The contract caps any future fee at 1%, and the API puts it in the summary before the payer signs."
     : `This deployment charges ${session.meta.feeBps / 100}%. It is shown before the payer confirms.`;
   return frame(`
     <div class="page-head">
