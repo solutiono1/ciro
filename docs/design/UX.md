@@ -176,9 +176,11 @@ One easing curve, `cubic-bezier(0.2, 0.7, 0.2, 1)`, on every transition. Motion 
 
 The landing uses one CC0 photo from StockSnap in `web/public/img/`: `paperwork-desk.jpg` by Matt Moloney, credited under it. Every icon on the landing is a line icon from the app's own set, one stroke and one size. The three 3D files in `web/public/icons/` are no longer used. The app screens use no photos.
 
-The landing's app preview (`.stage`) plays `web/public/media/ciro-demo-v2.mp4` over the drawn preview, with `ciro-demo-v2.webm` as the fallback and `ciro-demo-poster.jpg` as the poster. The MP4 is first because it is smaller and plays reliably; the WebM is the second source. The video is muted, looped, and playsinline, and `bindLanding` calls `play()` explicitly because some browsers ignore the autoplay attribute. If autoplay is blocked, the poster stays visible and the first pointer or key starts the video. `prefers-reduced-motion` removes the video and keeps the still preview.
+The landing's app preview (`.stage`) plays `web/public/media/ciro-demo-v3.mp4` over the drawn preview, with `ciro-demo-poster.jpg` as the poster. This is the supplied designed recording: 1584x1080, 3:2, 45.4 seconds, H.264 with an AAC track. It is used byte for byte. It is not trimmed, re-encoded, or cropped, and the stage frame is 3:2 to match it. The track stays in the file, but the element is muted. H.264 is the only source because the supplied file is the source of truth and the target browsers play it.
 
-The raw capture from `scripts/record-deployed.mjs` starts on the landing page, so it shows Ciro inside Ciro for the first few seconds. Trim that intro before shipping a new clip as v2, and regenerate the poster from the first app frame. The recording must be real app footage, not an AI-generated image.
+The video is muted, looped, and playsinline, and `bindLanding` calls `play()` explicitly because some browsers ignore the autoplay attribute. If autoplay is blocked, the poster stays visible and the first pointer or key starts the video. `prefers-reduced-motion` removes the video and keeps the still preview.
+
+If a future clip is recorded with `scripts/record-deployed.mjs`, that raw capture starts on the landing page, so it shows Ciro inside Ciro for the first few seconds. Trim that intro before shipping a future clip, and regenerate the poster from the first app frame. The current v3 is supplied and already starts on the app.
 
 The `[ bracket ]` labels stay as the section signature, in sentence case with no wide tracking. Display tracking is tight; small text and body text are not.
 
