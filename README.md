@@ -269,6 +269,7 @@ The first review is in [docs/security/REVIEW.md](docs/security/REVIEW.md). It re
 - The contract enforces the exact amount, the exact name, and the due time.
 - Allowances are capped and revocable, and a spender can only pay that payee's invoices.
 - The in-app faucet is a local-test convenience. On Aevum, tUSD8 comes from the QDay faucet; if the site says not eligible, use the QDay Discord `#faucet` channel.
+- The repository contains no real keys. The only key material is Anvil's published development mnemonic in `packages/api/support/fixture.js`; it is unfunded, local-test-only, and never used on Aevum. The deployer and demo keys live outside the repo and are gitignored.
 
 ## License
 

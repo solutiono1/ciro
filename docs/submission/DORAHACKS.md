@@ -231,6 +231,8 @@ Solo builder: **Solution Kanu**. All work was developed during the build window
 - [ ] DoraHacks project submitted and team listed (owner action).
 - [ ] Top-5 live demo rehearsal (owner action if selected).
 
+Key-material note: the repository has no real keys, `.env` files, or API keys. The only key-like strings are Anvil's published development mnemonic and its derived accounts in `packages/api/support/fixture.js`; they are public, unfunded, local-test-only, and never used on Aevum. The deployer and demo payee keys are outside the repo and gitignored.
+
 ## Judge test script
 
 1. Open <https://ciro-a9s.pages.dev> and connect a wallet on Aevum.
