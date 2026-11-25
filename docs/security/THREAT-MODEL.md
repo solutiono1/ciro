@@ -7,10 +7,13 @@ Confirmed from the PRD and architecture as of 2026-11-21. This is not a pentest.
 - The payer's tUSD8.
 - The payee's registered name and invoices.
 - Any local CLI key file on the operator's machine.
+- The small testnet faucet treasury (testnet-only, not user funds).
 
 ## What the server must not have
 
-The API, the MCP server, and any future web host must not accept a private key, store one, or broadcast a transaction on the user's behalf. They return unsigned transactions. The CLI signs only with a key file the operator points at, and it does not print that key.
+The invoice API, the MCP server, and any future web host must not accept a user private key, store one, or broadcast a user transaction on the user's behalf. They return unsigned transactions. The CLI signs only with a key file the operator points at, and it does not print that key.
+
+The only exception is the separate testnet faucet endpoint. It holds a dedicated testnet-only treasury key in a Cloudflare secret to send fixed tUSD8/tQDAY amounts. It cannot sign invoices, move user funds, or run on mainnet. It is outside the invoice signing path and needs its own review before any production use.
 
 ## Accepted behavior
 

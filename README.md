@@ -133,7 +133,7 @@ flowchart LR
 | Package | What it is |
 |---|---|
 | `contracts/` | `Ciro` (Solidity, Shanghai) holds payees, invoices, and allowances. `MockUSD8` is a local test token. |
-| `packages/api` | HTTP API over `/v1`. Reads the chain and returns unsigned transactions. Holds no key. |
+| `packages/api` | HTTP API over `/v1`. Reads the chain and returns unsigned transactions. The invoice API holds no key; the separate testnet faucet has a dedicated testnet-only key. |
 | `packages/cli` | The `ciro` binary. Signs locally with a key file and refuses a close name before it signs. |
 | `packages/sdk` | `@getciro/sdk`, the typed client of the API. No wallet. |
 | `packages/mcp` | An MCP server. Prepares payments; never signs. |
@@ -161,6 +161,8 @@ The chain is the source of truth. The API reads it and prepares calls; only a wa
 | POST | `/v1/tx/pay-from-allowance` | unsigned allowance pay |
 | POST | `/v1/tx/allow` | unsigned allowance |
 | POST | `/v1/tx/revoke` | unsigned revoke |
+| POST | `/v1/faucet` | request testnet tUSD8 + gas from the Ciro faucet |
+| POST | `/v1/tx/faucet` | unsigned local-test mint |
 
 Writes return `{ chainId, to, data, value, summary }` for the caller to sign. Errors are stable codes such as `name_mismatch`, `already_paid`, and `past_due`.
 
@@ -207,6 +209,14 @@ npm run dev -w @getciro/web       # web app on Vite
 npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CHAIN_ID
 ```
 
+## Testnet faucet
+
+Ciro runs a small Aevum testnet faucet, separate from the invoice API. It sends a fixed **1.0 tUSD8 + 0.01 tQDAY** from a dedicated treasury, with a 10-minute cooldown per address, without leaving the app. If the treasury is empty, the official QDay faucet is the fallback.
+
+Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Send test tUSD8 or tQDAY there to refill it.
+
+The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts. It cannot sign invoices, move user funds, or run on mainnet. The invoice API remains keyless.
+
 ## Configuration
 
 | Where | Variable | Purpose |
@@ -224,6 +234,9 @@ npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CH
 | Contracts | `CIRO_FEE_RECIPIENT` | Fee receiver passed to the constructor. |
 | Contracts | `CIRO_FEE_BPS` | Fee in basis points, `0` to `100`. This deployment uses `0`. |
 | CLI | `CIRO_CONFIG` | Config path. Defaults to `~/.ciro/config.json`. |
+| Faucet | `CIRO_FAUCET_KEY` | Dedicated testnet treasury key for `/v1/faucet`. Cloudflare secret; never commit it. |
+| Faucet | `CIRO_FAUCET_TOKEN_AMOUNT` | Optional tUSD8 base units per claim. Defaults to `1000000` (1.0), capped at 1.0. |
+| Faucet | `CIRO_FAUCET_GAS_AMOUNT` | Optional tQDAY wei per claim. Defaults to `0.01`. |
 
 ## Tests
 
@@ -252,10 +265,10 @@ The close-name refusal is shown in the demo and covered by `CiroAudit.t.sol`; a 
 - The allowance cap limits `payFromAllowance`. A spender can always pay with `pay` from its own wallet, so the cap is a budget control, not a hard wallet limit.
 - There is no cancel. An invoice stays payable until its due time; use a short due date for a typo.
 - Invoice memos and payee names are public on chain.
-- Aevum tUSD8 has no public mint. The in-app faucet is local-only; on Aevum it links to the official QDay faucet.
+- Aevum tUSD8 has no public mint. The contract has no faucet. Ciro runs a separate small testnet faucet with a dedicated treasury; it sends a fixed tUSD8 and tQDAY amount from inside the app. If that treasury is empty, the official QDay faucet is the fallback.
 - Invoice and receipt lists cap at 100 rows. There is no indexer; the API scans contract events from `CIRO_START_BLOCK`.
 - The contract is immutable. A fee change or a logic change needs a new deployment.
-- The API holds no key and no database. It can build a transaction, but it cannot sign or recover a payment.
+- The invoice API holds no key and no database. It can build a transaction, but it cannot sign or recover a payment. The testnet faucet is a separate endpoint with a dedicated testnet-only key.
 
 ## Roadmap
 
@@ -273,7 +286,7 @@ The full v2 plan, including the Control Room (public stats and an internal opera
 
 The first review is in [docs/security/REVIEW.md](docs/security/REVIEW.md). It records the scope, the four independent review lanes, the findings, the fixes, the residual risks, and the v2 items. The contract has no Critical or High finding. Two client trust findings were fixed: the pay page now reads the invoice and the name check from the chain, and every returned transaction is decoded against the pinned contract, token, chain, invoice, name, and amount before the wallet signs.
 
-- Non-custodial. The API and MCP never hold a key; only the wallet or the CLI signs.
+- Non-custodial for invoices. The invoice API and MCP never hold a key; only the wallet or the CLI signs a payment. The separate testnet faucet has a dedicated testnet-only key that can only send fixed faucet amounts.
 - The contract enforces the exact amount, the exact name, and the due time.
 - Allowances are capped and revocable, and a spender can only pay that payee's invoices.
 - The in-app faucet is a local-test convenience. On Aevum, tUSD8 comes from the QDay faucet; if the site says not eligible, use the QDay Discord `#faucet` channel.

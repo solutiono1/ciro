@@ -735,6 +735,24 @@ a.row:hover { background: var(--surface-inset); }
 @media (min-width: 720px) { .docs-note { grid-column: auto; } }
 .docs-row code { font-size: 0.75rem; }
 .docs-section pre { margin-top: 16px; }
+.code-block { position: relative; margin-top: 16px; }
+.code-block pre { margin-top: 0; padding-right: 84px; }
+.code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.code-copy:hover { color: var(--ink); border-color: var(--strong); }
 
 @keyframes faq-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 @keyframes dot-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }

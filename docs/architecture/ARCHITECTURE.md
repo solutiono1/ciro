@@ -74,7 +74,7 @@ tUSD8 is the token address, set at deploy, immutable. Decimals are 6. The contra
 
 ## API
 
-HTTP, JSON. No API key for public reads of an invoice. Creating an invoice and registering a name return an unsigned transaction the caller signs. The API does not broadcast unless the CLI asks it to, and even then the CLI holds the key locally and broadcasts itself. The server never sees a private key.
+HTTP, JSON. No API key for public reads of an invoice. Creating an invoice and registering a name return an unsigned transaction the caller signs. The API does not broadcast unless the CLI asks it to, and even then the CLI holds the key locally and broadcasts itself. The invoice API never sees a private key. A separate `/v1/faucet` endpoint holds a dedicated testnet-only treasury key to send fixed faucet amounts; it is not part of the invoice API.
 
 The route list, the units, and the error codes are in `docs/architecture/INTEGRATIONS.md`. Base path `/v1`.
 
@@ -97,6 +97,7 @@ A small web client. It adds chain 44005 if the wallet is elsewhere. It does not 
 - A database of balances. The chain balance is the balance.
 - A relayer, a bundler, a paymaster.
 - A second service that can mark an invoice paid. Only `pay` can.
+- Custody of user funds. The only key is the separate testnet faucet treasury; it cannot sign an invoice or move user funds.
 
 ## Deploy
 

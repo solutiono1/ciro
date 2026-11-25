@@ -1,4 +1,5 @@
 import { createState, handleRequest, parseBody } from "../../packages/api/src/app.js";
+import { handleFaucet } from "../../packages/api/src/faucet.js";
 
 // Cloudflare Pages Function for /api/*. It runs the same core as the Node
 // server, with the state cached per isolate. No database, no key, no Railway.
@@ -34,6 +35,15 @@ export async function onRequest(context) {
       body = parseBody(text);
     } catch {
       return json({ error: "bad_request" }, 400);
+    }
+  }
+
+  if (path === "/v1/faucet" && method === "POST") {
+    try {
+      const result = await handleFaucet(env, body);
+      return json(result.body, result.status);
+    } catch {
+      return json({ error: "faucet_failed" }, 502);
     }
   }
 

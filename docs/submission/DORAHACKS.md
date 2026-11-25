@@ -72,7 +72,7 @@ the cheap part. The missing record and the wrong-name risk are the product.
 - **Web app:** landing, onboarding, register, create invoice, public pay link,
   close-name refusal, exact-name pay, receipt, wallet, history, profile,
   settings, developers/docs.
-- **HTTP API:** reads and unsigned transactions. It holds no key.
+- **HTTP API:** reads and unsigned transactions. The invoice API holds no key. A separate `/v1/faucet` endpoint sends fixed testnet tUSD8/tQDAY from a dedicated treasury.
 - **CLI:** `@getciro/cli@0.1.2`, signs locally with a key file the operator owns.
 - **MCP:** `@getciro/mcp@0.1.0`, four tools (`ciro_check`,
   `ciro_prepare_invoice`, `ciro_prepare_pay`, `ciro_receipt`). It prepares; it
@@ -126,10 +126,12 @@ Agent key ────┘                                  │
 Wallet / CLI ───────────────────────────────────────> sign and send
 ```
 
-The API and MCP hold no key. Money never sits in Ciro. Only the wallet or the
-CLI signs. The web app reads the invoice and the name check from the chain before
-it shows a pay button, so a compromised API cannot move a signature to another
-contract, token, chain, invoice, name, or amount.
+The invoice API and MCP hold no key. Money never sits in Ciro. Only the wallet or
+the CLI signs. The web app reads the invoice and the name check from the chain
+before it shows a pay button, so a compromised API cannot move a signature to
+another contract, token, chain, invoice, name, or amount. The testnet faucet is
+a separate endpoint with a dedicated testnet-only key; it cannot sign invoices
+or touch user funds.
 
 ## Aevum integration
 
@@ -152,8 +154,9 @@ dependency of the core flow.
 
 ## Safety, trust, and controls
 
-- **Non-custodial:** the API, MCP, and SDK hold no key; the contract holds no
-  user balance.
+- **Non-custodial:** the invoice API, MCP, and SDK hold no key; the contract holds
+  no user balance. The testnet faucet is a separate convenience with a dedicated
+  testnet-only treasury key and fixed amounts.
 - **Pinned signing:** the web client decodes every returned transaction against
   the pinned contract, token, chain, invoice, name, and amount before the wallet
   signs.
@@ -167,6 +170,12 @@ dependency of the core flow.
   Critical or High finding in the contract. Client-trust findings were fixed.
 - **Transparent limits:** ASCII-only folding, duplicate names allowed, no cancel
   in v1, immutable contract, testnet only. These are in the README, not hidden.
+
+## Testnet faucet
+
+The app has a small Ciro faucet, separate from the invoice API. It sends **1.0 tUSD8 + 0.01 tQDAY** from a dedicated treasury (`0x09257929772176E9c832fC8056A0d9913Ef77a13`), with a 10-minute cooldown per address. The user stays on Ciro; there is no redirect and no mainnet-balance check. If the treasury is empty, the official QDay faucet is the fallback.
+
+The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts to an address. It cannot sign invoices, move user funds, or run on mainnet. The key is not in the repository or its history.
 
 ## Real-world utility and path to mainnet
 
@@ -190,7 +199,7 @@ design-partner program.
 - Solidity 0.8.x, Foundry, OpenZeppelin-style patterns.
 - viem for chain reads, wallet clients, and transaction decoding.
 - Vanilla ES modules and Vite for the web app; no framework lock-in.
-- Cloudflare Pages Functions for the API; no database and no key.
+- Cloudflare Pages Functions for the API; the invoice API has no database and no key. The testnet faucet uses a Cloudflare secret with a dedicated testnet-only key.
 - Node.js for the CLI and MCP; npm packages for the SDK, CLI, and MCP.
 - Playwright for the end-to-end flow; Foundry for contract tests.
 

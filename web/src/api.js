@@ -38,7 +38,10 @@ export function sentence(code) {
     allowance_revoked: "That allowance is revoked.",
     cap_exceeded: "That allowance is used up.",
     bad_address: "Enter a valid wallet address.",
-    faucet_rate_limited: "The faucet is cooling down. Wait a minute, then try again.",
+    faucet_rate_limited: "This wallet requested test funds recently. Try again in a few minutes.",
+    faucet_empty: "The Ciro testnet faucet is empty right now. Use the official QDay faucet as a fallback.",
+    faucet_offline: "The Ciro testnet faucet is offline. Use the official QDay faucet as a fallback.",
+    faucet_failed: "The Ciro testnet faucet could not send funds. Try again.",
     use_official_faucet: "tUSD8 comes from the QDay faucet, not this app.",
     not_found: "That is not available on this network.",
   };

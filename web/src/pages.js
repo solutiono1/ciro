@@ -143,7 +143,7 @@ function footer() {
         <div class="foot-col">
           <p class="foot-title">Network</p>
           <a href="https://explorer-test.qday.info" rel="noopener">Explorer ${icon("external", "ic-16")}</a>
-          <a href="https://faucet.qday.info/en" rel="noopener">tQDAY faucet ${icon("external", "ic-16")}</a>
+          <a href="https://faucet.qday.info/en" rel="noopener">Official QDay faucet ${icon("external", "ic-16")}</a>
           <a href="#/docs">Add network</a>
         </div>
       </div>
@@ -228,14 +228,6 @@ function frame(body, current, title) {
 let shellBound = false;
 
 async function requestTestToken(button, statusEl) {
-  // On Aevum, tUSD8 is the network's token and has no public mint. Send the
-  // user to the official QDay faucet instead of building a mint that reverts.
-  if (session.meta?.chainId === 44005) {
-    const href = faucetUrl();
-    if (href) window.open(href, "_blank", "noopener");
-    if (statusEl) statusEl.textContent = "tUSD8 comes from the QDay faucet. It opened in a new tab. If it says not eligible, use the QDay Discord #faucet channel.";
-    return false;
-  }
   if (!session.account) {
     location.hash = "#/start";
     return false;
@@ -243,8 +235,34 @@ async function requestTestToken(button, statusEl) {
   const label = button?.querySelector("span");
   const original = label ? label.textContent : "";
   if (button) button.disabled = true;
-  if (label) label.textContent = "Minting 1,000 tUSD8";
+  if (label) label.textContent = "Requesting test funds";
   try {
+    // On Aevum the Ciro testnet faucet sends a small amount from its own
+    // dedicated treasury. No redirect and no mainnet balance check.
+    if (session.meta?.chainId === 44005) {
+      const result = await api("POST", "/v1/faucet", { address: session.account });
+      if (result.status === "already_funded") {
+        if (statusEl) statusEl.textContent = "This wallet already has test funds.";
+        if (label) label.textContent = "Already funded";
+        return true;
+      }
+      const sent = [];
+      if (result.tokenAmount && result.tokenAmount !== "0") sent.push(`${formatUnits(BigInt(result.tokenAmount))} tUSD8`);
+      if (result.gasAmount && result.gasAmount !== "0") sent.push(`${(Number(result.gasAmount) / 1e18).toFixed(3)} tQDAY`);
+      const links = [result.tokenTx, result.gasTx]
+        .filter(Boolean)
+        .map((hash) => {
+          const href = explorerTx(hash);
+          return href
+            ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(shortHash(hash))}</a>`
+            : esc(shortHash(hash));
+        })
+        .join(" · ");
+      if (statusEl) statusEl.innerHTML = `Ciro sent ${esc(sent.join(" and ") || "test funds")}.${links ? ` ${links}` : ""}`;
+      if (label) label.textContent = "Test funds sent";
+      return true;
+    }
+    // Local test chain: the fixture has a mint.
     const tx = await api("POST", "/v1/tx/faucet", { address: session.account });
     tx.expect = { kind: "mint", to: session.account, amount: 1_000n * 1_000_000n };
     await broadcast([tx]);
@@ -252,12 +270,19 @@ async function requestTestToken(button, statusEl) {
     if (label) label.textContent = "Minted 1,000 tUSD8";
     return true;
   } catch (err) {
-    if (statusEl) statusEl.textContent = err.message || "The mint failed.";
-    if (label) label.textContent = "Mint failed";
+    if (statusEl) {
+      if (err.code === "faucet_empty" || err.code === "faucet_offline") {
+        const href = faucetUrl();
+        statusEl.innerHTML = `${esc(err.message)}${href ? ` <a href="${esc(href)}" target="_blank" rel="noopener">Open the official QDay faucet</a>` : ""}`;
+      } else {
+        statusEl.textContent = err.message || "The faucet failed.";
+      }
+    }
+    if (label) label.textContent = "Faucet unavailable";
     return false;
   } finally {
     if (button) button.disabled = false;
-    if (label) setTimeout(() => { label.textContent = original; }, 2400);
+    if (label) setTimeout(() => { label.textContent = original; }, 2600);
   }
 }
 
@@ -423,7 +448,7 @@ export function landing() {
             <a class="btn btn-primary btn-lg" href="#/start"><span>Get started</span>${arrow()}</a>
             <button class="btn btn-lg" type="button" data-scroll="lookup"><span>I have a link</span>${arrow()}</button>
           </div>
-          <p class="fineprint hero-note">New to Aevum? <a href="#/pay/10">See a live invoice</a> or <a href="https://faucet.qday.info/en" target="_blank" rel="noopener">get test funds</a>.</p>
+          <p class="fineprint hero-note">New to Aevum? <a href="#/pay/10">See a live invoice</a> first.</p>
         </div>
       </section>
       ${appStage()}
@@ -668,6 +693,7 @@ export function docsPage() {
               ${docsRow("POST", "/v1/tx/pay-from-allowance", "Unsigned allowance pay")}
               ${docsRow("POST", "/v1/tx/allow", "Unsigned allowance")}
               ${docsRow("POST", "/v1/tx/revoke", "Unsigned revoke")}
+              ${docsRow("POST", "/v1/faucet", "Testnet faucet (Ciro treasury)")}
               ${docsRow("POST", "/v1/tx/faucet", "Unsigned testnet mint")}
             </div>
             <pre>curl ${esc(apiUrl())}/v1/invoices/1</pre>
@@ -716,16 +742,41 @@ const tx = await ciro.preparePay(1, "Elena Rossi");</pre>
             </dl>
             <div class="actions mt-16">
               <button class="btn" type="button" id="docs-add-network">${icon("globe", "ic-16")}Add Aevum to wallet</button>
-              <button class="btn btn-primary" type="button" id="docs-faucet">${icon("droplet", "ic-16")}Get 1,000 tUSD8</button>
+              <button class="btn btn-primary" type="button" id="docs-faucet">${icon("droplet", "ic-16")}Get test tUSD8</button>
             </div>
             <p id="docs-status" class="fineprint" role="status"></p>
-            <p class="fineprint">On Aevum, tUSD8 comes from the QDay faucet, which opens in a new tab. If it says not eligible, use the QDay Discord #faucet channel. On a local test chain the app mints it. It is for testnet only.</p>
+            <p class="fineprint">On Aevum, Ciro requests a small amount from its testnet faucet without leaving the page. If the Ciro faucet is empty, the official QDay faucet is the fallback. On a local test chain the app mints it. Testnet only.</p>
           </section>
         </div>
       </div>
     </main>
     ${footer()}
   `, true);
+}
+
+function bindCodeCopy() {
+  for (const pre of document.querySelectorAll("pre")) {
+    if (pre.parentElement?.classList.contains("code-block")) continue;
+    const wrap = document.createElement("div");
+    wrap.className = "code-block";
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "code-copy";
+    button.textContent = "Copy";
+    button.setAttribute("aria-label", "Copy code");
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        button.textContent = "Copied";
+        setTimeout(() => { button.textContent = "Copy"; }, 1500);
+      } catch {
+        button.textContent = "Select";
+      }
+    });
+    wrap.appendChild(button);
+  }
 }
 
 export function bindDocs() {
@@ -753,25 +804,23 @@ export function bindDocs() {
         return;
       }
     }
-    const ok = await requestTestToken(event.currentTarget, status);
-    if (ok && status) status.textContent = "Minted 1,000 tUSD8 to this wallet.";
+    await requestTestToken(event.currentTarget, status);
   });
+  bindCodeCopy();
 }
 
 /* Onboarding */
 
 function onboardingHelp() {
-  const faucet = faucetUrl() || "https://faucet.qday.info/en";
   const walletAction = provider()
     ? `<button class="btn" type="button" id="start-add-network">Add Aevum ${arrow()}</button>`
     : `<a class="btn" href="https://metamask.io/download/" target="_blank" rel="noopener">Install a wallet ${icon("external", "ic-16")}</a>`;
   return `<div class="card card-pad onboard-card">
     <p class="bracket">[ First time? ]</p>
     <h3 class="h3">Add Aevum and get test funds.</h3>
-    <p class="lede">You need tQDAY for gas and tUSD8 to pay. Both are free on testnet. You can also look at a live invoice without a wallet.</p>
+    <p class="lede">You need tQDAY for gas and tUSD8 to pay. Both are free on testnet. Connect, then use Get test tUSD8 in the app. You can also look at a live invoice without a wallet.</p>
     <div class="actions">
       ${walletAction}
-      <a class="btn" href="${esc(faucet)}" target="_blank" rel="noopener">Get test funds ${icon("external", "ic-16")}</a>
       <a class="btn" href="#/pay/10">See a live invoice ${arrow()}</a>
     </div>
     <p id="start-status" class="fineprint" role="status"></p>
@@ -891,6 +940,9 @@ export function bindStart(go) {
       if (error) error.textContent = formMessage(err);
     }
   });
+  document.querySelector("#do-faucet")?.addEventListener("click", (event) =>
+    requestTestToken(event.currentTarget, document.querySelector("[data-faucet-status]")),
+  );
   const startStatus = document.querySelector("#start-status");
   document.querySelector("#start-add-network")?.addEventListener("click", async () => {
     if (startStatus) startStatus.textContent = "Asking the wallet to add Aevum.";
@@ -1273,7 +1325,7 @@ async function refreshPay(id, name) {
   });
   document.querySelector("#do-pay")?.addEventListener("click", () => submitPay(id, name, invoice));
   document.querySelector("#do-faucet")?.addEventListener("click", async (event) => {
-    const ok = await requestTestToken(event.currentTarget, action);
+    const ok = await requestTestToken(event.currentTarget, action.querySelector("[data-faucet-status]") || action);
     if (ok) await refreshPay(id, name);
   });
 }
@@ -1297,9 +1349,9 @@ function actionHtml(action, invoice) {
     return `<div class="warn-block">
       <p>The wallet does not hold ${esc(invoice.amountDisplay)} ${esc(invoice.symbol)}.</p>
       <div class="actions mt-12">
-        <button class="btn btn-primary" id="do-faucet" type="button">${icon("droplet", "ic-16")}Get 1,000 ${esc(invoice.symbol)}</button>
+        <button class="btn btn-primary" id="do-faucet" type="button">${icon("droplet", "ic-16")}Get test funds</button>
       </div>
-      <p class="fineprint">Testnet only. The token contract mints to this wallet.</p>
+      <p class="fineprint" data-faucet-status role="status">Testnet only. Ciro sends a small amount without leaving the site.</p>
     </div>`;
   }
   if (action === "pay") return `<div class="actions"><button class="btn btn-primary btn-block" id="do-pay" type="button">Pay ${esc(invoice.amountDisplay)} ${esc(invoice.symbol)}</button></div>`;
@@ -1515,7 +1567,7 @@ export async function walletPage() {
         </dl>
       </div>
       <div class="doc-body">
-        ${low.length ? `<p class="warn-block">Missing ${esc(low.join(" and "))}.${faucet ? ` <a href="${esc(faucet)}">Get it from the faucet.</a>` : ""}</p>` : ""}
+        ${low.length ? `<div class="warn-block"><p>Missing ${esc(low.join(" and "))}.</p><div class="actions mt-12"><button class="btn btn-primary" type="button" id="wallet-faucet">Get test funds</button></div><p id="wallet-faucet-status" class="fineprint" role="status"></p></div>` : ""}
         <p class="fineprint">These are the wallet's balances. Ciro does not keep a second balance.</p>
         <div class="actions mt-16">
           <button class="btn" type="button" id="copy-address">${icon("copy", "ic-16")}Copy address</button>
@@ -1553,6 +1605,9 @@ export function bindWallet(go) {
       if (status) status.textContent = err.message || "The wallet refused the network.";
     }
   });
+  document.querySelector("#wallet-faucet")?.addEventListener("click", (event) =>
+    requestTestToken(event.currentTarget, document.querySelector("#wallet-faucet-status")),
+  );
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
     await disconnect();
     try {
@@ -1783,6 +1838,7 @@ const invoice = await ciro.invoice(1);</pre>
 }
 
 export function bindDevelopers(go) {
+  bindCodeCopy();
   document.querySelector("#dev-add-network")?.addEventListener("click", async () => {
     const status = document.querySelector("#dev-status");
     try {
@@ -1839,8 +1895,7 @@ function statusLabel(status) {
 }
 
 function faucetBlock(token, sentence) {
-  const href = faucetUrl();
-  return `<p class="warn">${sentence}</p>${href ? `<p class="fineprint"><a href="${esc(href)}">Faucet for ${esc(token)}.</a></p>` : `<p class="fineprint">This network has no public faucet in the app.</p>`}`;
+  return `<div class="warn-block"><p>${sentence}</p><div class="actions mt-12"><button class="btn btn-primary" type="button" id="do-faucet">${icon("droplet", "ic-16")}Get test funds</button></div><p class="fineprint" data-faucet-status role="status">Testnet only. Ciro sends a small amount without leaving the site.</p></div>`;
 }
 
 function copyLink(id) {

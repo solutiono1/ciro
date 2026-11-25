@@ -161,6 +161,14 @@ Result on 24 November 2026: 20 Foundry tests, 3 API tests, 10 web unit tests, an
 - The public API has no rate limit. Receipts are now one scan per request, but a determined caller can still consume RPC quota.
 - No static analyzer or formal verification was run.
 
+## Post-review change: testnet faucet (26 November 2026)
+
+A separate `/v1/faucet` endpoint was added after this review. It is outside the
+invoice contract and the invoice signing path. It holds a dedicated
+testnet-only treasury key in a Cloudflare secret and sends fixed tUSD8/tQDAY
+amounts with a cooldown. It was not covered by this review. It must be included
+in the v2 API and operations review. The invoice API remains keyless.
+
 ## v2 recommendations
 
 1. Preserve non-ASCII bytes in the name hash or reject non-ASCII on chain.

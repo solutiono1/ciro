@@ -9,7 +9,7 @@ The build order is fixed: the backend first, then the web app.
 | Order | Surface | State |
 |---|---|---|
 | 1 | Contract | Done. `forge test` passed |
-| 2 | HTTP API | Done. Local tests passed. Not deployed |
+| 2 | HTTP API | Done. Live on Cloudflare Pages Functions |
 | 3 | CLI | Done |
 | 4 | MCP | Done in the backend pass, because the owner named it there |
 | 5 | Web app | Done. Specified in UX.md. Land, onboard, invoice, pay, receipt, history, wallet, profile, settings, developers |
@@ -42,6 +42,13 @@ Prepare, unsigned:
 `amount` and `cap` are base-unit strings. Six decimals. `"100000000"` is 100 tUSD8. `due` and `expiry` are unix seconds or `YYYY-MM-DD`, which means 23:59:59 UTC.
 
 Response: `{ "chainId": 44005, "to": "0x…", "data": "0x…", "value": "0", "summary": "Pay invoice 4, 100.000000 tUSD8, fee 0" }`. The summary is what the CLI prints before it signs.
+
+Testnet faucet:
+
+- `POST /v1/faucet` `{ "address": "0x…" }` sends a fixed **1.0 tUSD8 + 0.01 tQDAY** from a dedicated testnet treasury, with a 10-minute cooldown per address. It returns `{ status: "sent", tokenTx, gasTx, tokenAmount, gasAmount }` or `{ status: "already_funded" }`.
+- It is separate from the invoice API and uses a dedicated testnet-only key in a Cloudflare secret. It cannot sign invoices or touch user funds.
+- On a local test chain the app uses `POST /v1/tx/faucet` (the fixture mint) instead.
+- Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Send test tUSD8 or tQDAY there to refill.
 
 When the snapshot is not an exact match, pay returns 409 `{ "error": "name_mismatch", "result": "close" }` or `"none"`, and the body has no `data`. Already paid, past due, and a missing, revoked, expired, or too-small allowance are separate codes (`already_paid`, `past_due`, `no_allowance`, `allowance_revoked`, `allowance_expired`, `cap_exceeded`). Those bodies have no `data` either. The allowance codes are returned only when `spender` was sent, because the API does not know who will sign until then. The contract still enforces them.
 
