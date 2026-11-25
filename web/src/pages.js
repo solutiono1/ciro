@@ -296,67 +296,9 @@ export function bindShell() {
 
 function appStage() {
   return `<section class="stage-wrap" aria-label="A preview of the Ciro app">
-    <!-- The app recording (web/public/media/ciro-demo-v3.mp4) plays over this
-         drawn preview when it exists. Until then the preview below holds the
-         space, so the landing never shows a broken or blank video. -->
-    <div class="wallpaper">
-      <div class="stage" data-preview>
-        <div class="stage-bar">
-          <span class="stage-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="stage-title">Ciro · dashboard</span>
-          <span class="stage-tag">Screen recording</span>
-        </div>
-        <div class="stage-frame">
-          <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" poster="/media/ciro-demo-poster.jpg" aria-hidden="true" tabindex="-1">
-            <source src="/media/ciro-demo-v3.mp4" type="video/mp4" />
-          </video>
-          <div class="stage-app" aria-hidden="true">
-        <aside class="stage-side">
-          <p class="stage-brand">Ciro</p>
-          <div class="stage-new">${icon("plus", "ic-16")}<span>New invoice</span></div>
-          <div class="stage-nav">
-            <span class="is-on">${icon("dashboard")}<span>Dashboard</span></span>
-            <span>${icon("invoices")}<span>Invoices</span></span>
-            <span>${icon("history")}<span>History</span></span>
-            <span>${icon("wallet")}<span>Wallet</span></span>
-          </div>
-          <div class="stage-side-foot">
-            <span class="net"><span class="dot"></span>Aevum testnet</span>
-            <p class="mono">Ada Okonkwo</p>
-          </div>
-        </aside>
-        <div class="stage-main">
-          <div class="stage-head"><p>Dashboard</p><span>Ada Okonkwo</span></div>
-          <div class="stage-body">
-            <div class="stage-quick">
-              <span>${icon("link")}<b>Copy latest link</b></span>
-              <span>${icon("history")}<b>History</b></span>
-              <span>${icon("wallet")}<b>Wallet</b></span>
-            </div>
-            <p class="stage-label">Open invoices</p>
-            <div class="stage-list">
-              <div class="stage-row">
-                <span class="stage-row-main"><b>1.000000 tUSD8</b><em>March design</em></span>
-                <span class="status status-open">Open</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-row-main"><b>2.400000 tUSD8</b><em>Retainer, April</em></span>
-                <span class="status status-open">Open</span>
-              </div>
-            </div>
-            <p class="stage-label">Latest receipts</p>
-            <div class="stage-list">
-              <div class="stage-row">
-                <span class="stage-row-main"><b>850.000000 tUSD8</b><em>Studio deposit</em></span>
-                <span class="status status-paid">Paid</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-    </div>
+    <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" poster="/media/ciro-demo-poster.jpg" aria-hidden="true" tabindex="-1">
+      <source src="/media/ciro-demo-v3.mp4" type="video/mp4" />
+    </video>
   </section>`;
 }
 
@@ -559,14 +501,21 @@ export function bindLanding() {
       document.querySelector(`#${trigger.dataset.scroll}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   }
-  // The demo video plays over the drawn preview once it loads. When the file
-  // is missing, the error removes the video and the preview stays visible.
+  // The supplied clip is the whole visual. It is visible with its poster from
+  // the start; the script only starts playback and keeps a still if it fails.
   const video = document.querySelector(".stage-video[data-demo]");
   if (video) {
+    const showStill = () => {
+      if (!video.isConnected) return;
+      const still = document.createElement("img");
+      still.className = "stage-video";
+      still.src = video.getAttribute("poster") || "";
+      still.alt = "Ciro dashboard";
+      video.replaceWith(still);
+    };
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      video.remove();
+      showStill();
     } else {
-      const show = () => video.classList.add("is-on");
       const start = () => {
         if (!video.isConnected || !video.paused) return;
         // Some browsers ignore the autoplay attribute even when the video is
@@ -576,21 +525,12 @@ export function bindLanding() {
         const attempt = video.play();
         if (attempt?.catch) attempt.catch(() => {});
       };
-      const drop = () => video.remove();
-      if (video.readyState >= 2) {
-        show();
-        start();
-      }
-      video.addEventListener("loadeddata", show);
-      video.addEventListener("canplay", () => {
-        show();
-        start();
-      });
-      video.addEventListener("playing", show);
-      video.addEventListener("error", drop);
+      if (video.readyState >= 2) start();
+      video.addEventListener("canplay", start);
+      video.addEventListener("error", showStill);
       for (const source of video.querySelectorAll("source")) {
         source.addEventListener("error", () => {
-          if (video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) drop();
+          if (video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) showStill();
         });
       }
       // If autoplay is blocked, the poster stays visible. The first pointer or
