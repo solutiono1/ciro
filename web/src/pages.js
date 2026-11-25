@@ -289,12 +289,14 @@ async function requestTestToken(button, statusEl) {
 export function bindShell() {
   const more = document.querySelector("#tabs-more");
   const panel = document.querySelector("#sheet");
-  document.querySelector("#side-faucet")?.addEventListener("click", (event) =>
-    requestTestToken(event.currentTarget, document.querySelector("#side-faucet-status")),
-  );
-  document.querySelector("#sheet-faucet")?.addEventListener("click", (event) =>
-    requestTestToken(event.currentTarget, null),
-  );
+  document.querySelector("#side-faucet")?.addEventListener("click", async (event) => {
+    const ok = await requestTestToken(event.currentTarget, document.querySelector("#side-faucet-status"));
+    if (ok) window.dispatchEvent(new Event("hashchange"));
+  });
+  document.querySelector("#sheet-faucet")?.addEventListener("click", async (event) => {
+    const ok = await requestTestToken(event.currentTarget, null);
+    if (ok) window.dispatchEvent(new Event("hashchange"));
+  });
   if (!more || !panel) return;
   const setOpen = (open) => {
     panel.hidden = !open;
@@ -940,9 +942,10 @@ export function bindStart(go) {
       if (error) error.textContent = formMessage(err);
     }
   });
-  document.querySelector("#do-faucet")?.addEventListener("click", (event) =>
-    requestTestToken(event.currentTarget, document.querySelector("[data-faucet-status]")),
-  );
+  document.querySelector("#do-faucet")?.addEventListener("click", async (event) => {
+    const ok = await requestTestToken(event.currentTarget, document.querySelector("[data-faucet-status]"));
+    if (ok) await go();
+  });
   const startStatus = document.querySelector("#start-status");
   document.querySelector("#start-add-network")?.addEventListener("click", async () => {
     if (startStatus) startStatus.textContent = "Asking the wallet to add Aevum.";
@@ -1605,9 +1608,10 @@ export function bindWallet(go) {
       if (status) status.textContent = err.message || "The wallet refused the network.";
     }
   });
-  document.querySelector("#wallet-faucet")?.addEventListener("click", (event) =>
-    requestTestToken(event.currentTarget, document.querySelector("#wallet-faucet-status")),
-  );
+  document.querySelector("#wallet-faucet")?.addEventListener("click", async (event) => {
+    const ok = await requestTestToken(event.currentTarget, document.querySelector("#wallet-faucet-status"));
+    if (ok) await go();
+  });
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
     await disconnect();
     try {
