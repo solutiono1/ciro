@@ -296,7 +296,7 @@ export function bindShell() {
 
 function appStage() {
   return `<section class="stage-wrap" aria-label="A preview of the Ciro app">
-    <!-- The app recording (web/public/media/ciro-demo-v2.mp4) plays over this
+    <!-- The app recording (web/public/media/ciro-demo-v3.mp4) plays over this
          drawn preview when it exists. Until then the preview below holds the
          space, so the landing never shows a broken or blank video. -->
     <div class="wallpaper">
@@ -308,8 +308,7 @@ function appStage() {
         </div>
         <div class="stage-frame">
           <video class="stage-video" data-demo muted loop playsinline autoplay preload="auto" poster="/media/ciro-demo-poster.jpg" aria-hidden="true" tabindex="-1">
-            <source src="/media/ciro-demo-v2.mp4" type="video/mp4" />
-            <source src="/media/ciro-demo-v2.webm" type="video/webm" />
+            <source src="/media/ciro-demo-v3.mp4" type="video/mp4" />
           </video>
           <div class="stage-app" aria-hidden="true">
         <aside class="stage-side">

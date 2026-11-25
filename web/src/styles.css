@@ -509,11 +509,14 @@ a.row:hover { background: var(--surface-inset); }
 .stage-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--subtle); opacity: 0.55; }
 .stage-title { font-size: 0.75rem; color: var(--muted); }
 .stage-tag { margin-left: auto; font-family: var(--mono); font-size: 0.625rem; color: var(--muted); }
-.stage-frame { position: relative; padding-top: 62.5%; }
+/* The supplied recording is 1584x1080 (3:2). Match the frame so the whole
+   picture shows with no crop and no letterbox. */
+.stage-frame { position: relative; padding-top: 68.1818%; }
 .stage-video {
   display: block;
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
