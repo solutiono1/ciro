@@ -6,6 +6,7 @@ import { session } from "../src/session.js";
 const ACCOUNT = "0x1111111111111111111111111111111111111111";
 let revokeFails = false;
 const store = new Map();
+const listeners = {};
 const ethereum = {
   async request({ method }) {
     if (method === "eth_accounts" || method === "eth_requestAccounts") return [ACCOUNT];
@@ -16,11 +17,13 @@ const ethereum = {
     }
     throw new Error(`unsupported ${method}`);
   },
-  on() {},
+  on(event, fn) {
+    (listeners[event] ??= []).push(fn);
+  },
   removeListener() {},
 };
 
-globalThis.window = { ethereum };
+globalThis.window = { ethereum, dispatchEvent() {} };
 globalThis.localStorage = {
   getItem: (key) => (store.has(key) ? store.get(key) : null),
   setItem: (key, value) => store.set(key, String(value)),
@@ -68,4 +71,16 @@ test("a wallet without revoke support cannot silently reattach", async () => {
 
   await connect();
   assert.equal(session.account, ACCOUNT);
+});
+
+test("a wallet-side empty accounts event is treated as a disconnect", async () => {
+  reset();
+  await connect();
+  assert.ok(listeners.accountsChanged?.length);
+  for (const listener of listeners.accountsChanged) listener([]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(session.account, null);
+  assert.equal(store.get("ciro.walletDisconnected"), "1");
+  await refreshWallet();
+  assert.equal(session.account, null);
 });

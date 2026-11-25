@@ -42,6 +42,21 @@ function clearWalletDisconnected() {
   }
 }
 
+const boundProviders = new WeakSet();
+
+function bindWalletEvents(ethereum) {
+  if (boundProviders.has(ethereum)) return;
+  boundProviders.add(ethereum);
+  ethereum.on?.("accountsChanged", (accounts) => {
+    // A wallet that reports no accounts has been disconnected outside Ciro.
+    // Treat it like the in-app disconnect, so navigation cannot silently
+    // reattach the old account.
+    if (!accounts?.length) markWalletDisconnected();
+    refreshWallet().then(() => window.dispatchEvent(new Event("hashchange")));
+  });
+  ethereum.on?.("chainChanged", () => location.reload());
+}
+
 export function provider() {
   return window.ethereum ?? null;
 }
@@ -64,9 +79,11 @@ export async function refreshWallet() {
   session.account = accounts[0] ? getAddress(accounts[0]) : null;
   if (!session.account) {
     session.chainId = null;
+    session.payee = null;
     return;
   }
   session.chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+  bindWalletEvents(ethereum);
 }
 
 export async function connect() {
@@ -78,13 +95,7 @@ export async function connect() {
   clearWalletDisconnected();
   session.account = getAddress(accounts[0]);
   session.chainId = chainId;
-  if (!ethereum.__ciroListening) {
-    ethereum.__ciroListening = true;
-    ethereum.on?.("accountsChanged", () => {
-      refreshWallet().then(() => window.dispatchEvent(new Event("hashchange")));
-    });
-    ethereum.on?.("chainChanged", () => location.reload());
-  }
+  bindWalletEvents(ethereum);
 }
 
 export function disconnect() {
