@@ -373,7 +373,7 @@ function docsTeaser() {
       <a class="card build-card" href="#/docs">
         <span class="build-icon">${icon("developers")}</span>
         <span class="build-title">CLI</span>
-        <code>ciro pay 4 --name "Ada Okonkwo"</code>
+        <code>ciro pay 4 --name "Elena Rossi"</code>
         <span class="build-link">See the commands ${arrow()}</span>
       </a>
       <a class="card build-card" href="#/docs">
@@ -674,9 +674,9 @@ export function docsPage() {
             <h2 class="h2">CLI</h2>
             <p>The CLI talks to the same API and prints the transaction for a wallet to sign. It signs locally with a key file you own.</p>
             <pre>npm i -g @getciro/cli
-ciro register "Ada Okonkwo"
+ciro register "Elena Rossi"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
-ciro pay 4 --name "Ada Okonkwo"
+ciro pay 4 --name "Elena Rossi"
 ciro receipt 4</pre>
           </section>
           <section class="docs-section" id="doc-mcp">
@@ -691,7 +691,7 @@ ciro receipt 4</pre>
             <pre>import { createClient } from "@getciro/sdk";
 const ciro = createClient({ apiUrl: "${esc(apiUrl())}" });
 const invoice = await ciro.invoice(1);
-const tx = await ciro.preparePay(1, "Ada Okonkwo");</pre>
+const tx = await ciro.preparePay(1, "Elena Rossi");</pre>
           </section>
           <section class="docs-section" id="doc-contract">
             <h2 class="h2">Contract</h2>
@@ -824,7 +824,7 @@ function registerBlock() {
       <div class="form-body">
         <div class="field">
           <label class="label" for="name">Name</label>
-          <input id="name" name="name" autocomplete="name" placeholder="Ada Okonkwo" />
+          <input id="name" name="name" autocomplete="name" placeholder="Elena Rossi" />
         </div>
         <p id="preview" class="label"></p>
       </div>
@@ -1649,9 +1649,9 @@ export function developersPage(apiBase, rpc) {
     <h2 class="h2 section-title">CLI</h2>
     <p class="muted">The <code>ciro</code> binary signs locally with a key file you own. It never sends the key to the server.</p>
     <pre>npm i -g @getciro/cli
-ciro register "Ada Okonkwo"
+ciro register "Elena Rossi"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
-ciro pay 4 --name "Ada Okonkwo"
+ciro pay 4 --name "Elena Rossi"
 ciro receipt 4</pre>
     <h2 class="h2 section-title">MCP</h2>
     <p class="muted">An agent runs this server to prepare a payment without holding the treasury. It does not sign.</p>

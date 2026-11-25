@@ -17,8 +17,8 @@ function parseHuman(input) {
 
 const USAGE = `ciro register <name>
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
-ciro check --payee 0x… --name "Ada Okonkwo"
-ciro pay <id> --name "Ada Okonkwo" [--from-allowance]
+ciro check --payee 0x… --name "Elena Rossi"
+ciro pay <id> --name "Elena Rossi" [--from-allowance]
 ciro receipt <id>
 ciro allow <spender> --cap 500 --expiry 2026-12-31
 ciro revoke <spender>

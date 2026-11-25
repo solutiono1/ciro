@@ -28,3 +28,6 @@ demo/audio/
 .npm-token
 .npm-token.*
 .npmrc
+
+# Local demo payee key (testnet only)
+.demo-payee-key*

@@ -1,4 +1,3 @@
-import { createServer as createHttpServer } from "node:http";
 import { createPublicClient, defineChain, getAddress, http, isAddress } from "viem";
 import {
   buildPay,
@@ -38,45 +37,48 @@ const MAX_DATE_SECONDS = 253402300799n;
 const FAUCET_COOLDOWN_MS = 60_000;
 const faucetLast = new Map();
 
-export function createServer(config) {
+export function createState(config) {
   const chain = defineChain({
     id: config.chainId,
     name: config.chainId === 44005 ? "Aevum" : "Ciro local",
     nativeCurrency: { name: "tQDAY", symbol: "tQDAY", decimals: 18 },
     rpcUrls: { default: { http: [config.rpcUrl] } },
   });
-  const state = {
-    config,
+  return {
+    config: { ...config, address: getAddress(config.address) },
     client: createPublicClient({ chain, transport: http(config.rpcUrl) }),
     meta: null,
   };
-  return createHttpServer((req, res) => {
-    route(req, res, state).catch((err) => {
-      if (res.headersSent) return;
-      if (err instanceof ApiError) {
-        send(res, err.status, err.body());
-        return;
-      }
-      send(res, 502, { error: "chain_unavailable" });
-    });
-  });
 }
 
-async function route(req, res, state) {
-  res.setHeader("access-control-allow-origin", "*");
-  res.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
-  res.setHeader("access-control-allow-headers", "content-type");
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
+export function parseBody(text) {
+  if (!text) return {};
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new ApiError(400, "bad_request");
   }
-  const url = new URL(req.url ?? "/", "http://127.0.0.1");
-  const result = await dispatch(req, url.pathname, state);
-  send(res, result.status, result.body);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new ApiError(400, "bad_request");
+  }
+  return parsed;
 }
 
-async function dispatch(req, path, state) {
+// Used by the Node server and the Cloudflare Pages Function. Both pass an
+// already parsed JSON object, so the core never touches a Node request.
+export async function handleRequest(state, method, path, body) {
+  try {
+    return await dispatch(method, path, state, body);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return { status: err.status, body: err.body() };
+    }
+    return { status: 502, body: { error: "chain_unavailable" } };
+  }
+}
+
+async function dispatch(method, path, state, body) {
   const invoice = path.match(/^\/v1\/invoices\/([1-9]\d{0,77})$/);
   const invoiceCheck = path.match(/^\/v1\/invoices\/([1-9]\d{0,77})\/check$/);
   const receipt = path.match(/^\/v1\/receipts\/([1-9]\d{0,77})$/);
@@ -85,22 +87,22 @@ async function dispatch(req, path, state) {
   const payerReceipts = path.match(/^\/v1\/payers\/(0x[0-9a-fA-F]{40})\/receipts$/);
   const payee = path.match(/^\/v1\/payees\/(0x[0-9a-fA-F]{40})$/);
 
-  if (req.method === "GET" && path === "/v1/meta") return { status: 200, body: await publicMeta(state) };
-  if (req.method === "GET" && invoice) return getOneInvoice(state, parseId(invoice[1]));
-  if (req.method === "POST" && invoiceCheck) return postInvoiceCheck(state, parseId(invoiceCheck[1]), await readJson(req));
-  if (req.method === "GET" && receipt) return getReceipt(state, parseId(receipt[1]));
-  if (req.method === "POST" && path === "/v1/check") return postCheck(state, await readJson(req));
-  if (req.method === "GET" && payeeInvoices) return getPayeeInvoices(state, requireAddress(payeeInvoices[1]));
-  if (req.method === "GET" && payeeAllowances) return getAllowances(state, requireAddress(payeeAllowances[1]));
-  if (req.method === "GET" && payerReceipts) return getPayerReceipts(state, requireAddress(payerReceipts[1]));
-  if (req.method === "GET" && payee) return { status: 200, body: await readPayee(state, requireAddress(payee[1])) };
-  if (req.method === "POST" && path === "/v1/tx/register") return postRegister(state, await readJson(req));
-  if (req.method === "POST" && path === "/v1/tx/invoice") return postInvoice(state, await readJson(req));
-  if (req.method === "POST" && path === "/v1/tx/pay") return postPay(state, await readJson(req), false);
-  if (req.method === "POST" && path === "/v1/tx/pay-from-allowance") return postPay(state, await readJson(req), true);
-  if (req.method === "POST" && path === "/v1/tx/allow") return postAllow(state, await readJson(req));
-  if (req.method === "POST" && path === "/v1/tx/revoke") return postRevoke(state, await readJson(req));
-  if (req.method === "POST" && path === "/v1/tx/faucet") return postFaucet(state, await readJson(req));
+  if (method === "GET" && path === "/v1/meta") return { status: 200, body: await publicMeta(state) };
+  if (method === "GET" && invoice) return getOneInvoice(state, parseId(invoice[1]));
+  if (method === "POST" && invoiceCheck) return postInvoiceCheck(state, parseId(invoiceCheck[1]), body);
+  if (method === "GET" && receipt) return getReceipt(state, parseId(receipt[1]));
+  if (method === "POST" && path === "/v1/check") return postCheck(state, body);
+  if (method === "GET" && payeeInvoices) return getPayeeInvoices(state, requireAddress(payeeInvoices[1]));
+  if (method === "GET" && payeeAllowances) return getAllowances(state, requireAddress(payeeAllowances[1]));
+  if (method === "GET" && payerReceipts) return getPayerReceipts(state, requireAddress(payerReceipts[1]));
+  if (method === "GET" && payee) return { status: 200, body: await readPayee(state, requireAddress(payee[1])) };
+  if (method === "POST" && path === "/v1/tx/register") return postRegister(state, body);
+  if (method === "POST" && path === "/v1/tx/invoice") return postInvoice(state, body);
+  if (method === "POST" && path === "/v1/tx/pay") return postPay(state, body, false);
+  if (method === "POST" && path === "/v1/tx/pay-from-allowance") return postPay(state, body, true);
+  if (method === "POST" && path === "/v1/tx/allow") return postAllow(state, body);
+  if (method === "POST" && path === "/v1/tx/revoke") return postRevoke(state, body);
+  if (method === "POST" && path === "/v1/tx/faucet") return postFaucet(state, body);
   throw new ApiError(404, "not_found");
 }
 
@@ -295,54 +297,4 @@ function requireName(value, allowEmpty) {
 function requireAddress(value) {
   if (typeof value !== "string" || !isAddress(value, { strict: false })) throw new ApiError(400, "bad_address");
   return getAddress(value);
-}
-
-function readJson(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    let settled = false;
-    const fail = (err) => {
-      if (settled) return;
-      settled = true;
-      reject(err);
-    };
-    const ok = (value) => {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    };
-    req.on("data", (chunk) => {
-      size += chunk.length;
-      if (size > 32_768) {
-        fail(new ApiError(400, "bad_request"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        ok({});
-        return;
-      }
-      try {
-        const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          fail(new ApiError(400, "bad_request"));
-          return;
-        }
-        ok(parsed);
-      } catch (err) {
-        fail(err instanceof ApiError ? err : new ApiError(400, "bad_request"));
-      }
-    });
-    req.on("error", () => fail(new ApiError(400, "bad_request")));
-  });
-}
-
-function send(res, status, body) {
-  const payload = JSON.stringify(body);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(payload) });
-  res.end(payload);
 }

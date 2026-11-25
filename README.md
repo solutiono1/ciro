@@ -84,9 +84,9 @@ npx @getciro/mcp
 ```js
 import { createClient } from "@getciro/sdk";
 
-const ciro = createClient({ apiUrl: "https://ciro-api-production.up.railway.app" });
+const ciro = createClient({ apiUrl: "https://ciro-a9s.pages.dev/api" });
 const invoice = await ciro.invoice(1);
-const tx = await ciro.preparePay(1, "Ada Okonkwo"); // unsigned; you sign it
+const tx = await ciro.preparePay(1, "Elena Rossi"); // unsigned; you sign it
 ```
 
 Published packages:
@@ -159,10 +159,10 @@ Writes return `{ chainId, to, data, value, summary }` for the caller to sign. Er
 Install with `npm i -g @getciro/cli` (or run `npx @getciro/cli`).
 
 ```bash
-ciro register "Ada Okonkwo"
+ciro register "Elena Rossi"
 ciro invoice --amount 100 --reference "March design" --due 2026-12-01
-ciro check --payee 0x... --name "Ada Okonkwo"
-ciro pay 4 --name "Ada Okonkwo"
+ciro check --payee 0x... --name "Elena Rossi"
+ciro pay 4 --name "Elena Rossi"
 ciro receipt 4
 ```
 

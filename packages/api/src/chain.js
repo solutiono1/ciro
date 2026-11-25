@@ -164,9 +164,11 @@ async function explorerLogs(state, topic0, { topic1, topic2 } = {}) {
     params.set("topic2", topic2);
     params.set("topic0_2_opr", "and");
   }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
     const response = await fetch(`${state.config.explorerUrl}/api?${params.toString()}`, {
-      signal: AbortSignal.timeout(8000),
+      signal: controller.signal,
     });
     if (!response.ok) return null;
     const json = await response.json();
@@ -174,6 +176,8 @@ async function explorerLogs(state, topic0, { topic1, topic2 } = {}) {
     return json.result;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 

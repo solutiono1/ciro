@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from "viem";
-import { createServer } from "./app.js";
+import { createServer } from "./node-server.js";
 
 const rpcUrl = process.env.CIRO_RPC_URL;
 const address = process.env.CIRO_ADDRESS;

@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bytesToHex, createPublicClient, createWalletClient, defineChain, http } from "viem";
 import { mnemonicToAccount, privateKeyToAccount } from "viem/accounts";
-import { createServer as createApi } from "../src/app.js";
+import { createServer as createApi } from "../src/node-server.js";
 import { tokenAbi } from "../src/abi.js";
 
 // Anvil's published development mnemonic. These accounts are not secrets. Never use them on Aevum.
