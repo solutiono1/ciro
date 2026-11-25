@@ -221,7 +221,8 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
     assert.match(await page.locator("body").innerText(), /1\.000000/);
     assert.match(await page.locator("body").innerText(), /Ada Okonkwo/);
     assert.match(await page.locator("body").innerText(), /March design/);
-    assert.match(await page.locator("body").innerText(), /0x[0-9a-fA-F]{64}/);
+    assert.match(await page.locator("body").innerText(), /0x[0-9a-fA-F]{8}…[0-9a-fA-F]{6}/);
+    assert.match(await page.locator("[data-tx]").getAttribute("data-tx"), /^0x[0-9a-fA-F]{64}$/);
 
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await overflows(page), false);

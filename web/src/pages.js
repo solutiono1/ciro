@@ -1,7 +1,7 @@
 import { decodeEventLog } from "viem";
 import { ciroAbi } from "../../packages/api/src/abi.js";
 import { api } from "./api.js";
-import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, shortAddress, when } from "./format.js";
+import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, shortAddress, shortHash, when } from "./format.js";
 import { payDecision } from "./pay-state.js";
 import {
   apiUrl,
@@ -309,7 +309,7 @@ const FAQ = [
   ],
   [
     "Why does the payer type a name?",
-    "A name is easier to check than a hex address. The contract compares the typed name to the registered name and refuses anything that is not exact.",
+    "A name is easier to check than a hex address. The contract compares the typed name to the name locked on that invoice and refuses anything that is not exact.",
   ],
   [
     "What happens when the name is close?",
@@ -325,7 +325,7 @@ const FAQ = [
   ],
   [
     "What does it cost?",
-    "This deployment charges a zero fee. A later priced deployment charges 0.5%, shown before the payer confirms. Gas is paid in tQDAY.",
+    "This deployment charges a zero fee. The contract caps any future fee at 1%, and the API puts it in the summary before the payer signs. Gas is paid in tQDAY.",
   ],
   [
     "Can I pay without an account?",
@@ -360,7 +360,7 @@ function docsTeaser() {
   return `<section class="section" id="build" aria-labelledby="build-title">
     <div class="section-head">
       <p class="bracket">[ Build ]</p>
-      <h2 class="h2" id="build-title">The API, the CLI, and an MCP server.</h2>
+      <h2 class="h2" id="build-title">The API, the CLI, an MCP server, and an SDK.</h2>
       <p class="lede">Read an invoice without a key. Prepare a payment without signing it. Every route and both contract addresses are in the docs.</p>
     </div>
     <div class="build-grid">
@@ -379,8 +379,14 @@ function docsTeaser() {
       <a class="card build-card" href="#/docs">
         <span class="build-icon">${icon("book")}</span>
         <span class="build-title">MCP</span>
-        <code>node packages/mcp/bin/ciro-mcp.js</code>
+        <code>npx @getciro/mcp</code>
         <span class="build-link">Connect an agent ${arrow()}</span>
+      </a>
+      <a class="card build-card" href="#/docs">
+        <span class="build-icon">${icon("link")}</span>
+        <span class="build-title">SDK</span>
+        <code>npm i @getciro/sdk</code>
+        <span class="build-link">Read the client ${arrow()}</span>
       </a>
     </div>
   </section>`;
@@ -462,7 +468,7 @@ export function landing() {
           <p class="lede">A wallet address is easy to copy wrong and hard to check. A registered name is something two people can agree on out loud.</p>
           <dl class="why-facts">
             <div><dt>Exact</dt><dd>The name matches the invoice. The pay button appears.</dd></div>
-            <div><dt>Close</dt><dd>One letter or one space off. No pay button.</dd></div>
+            <div><dt>Close</dt><dd>The initials and word count match, and the length is within two characters. No pay button.</dd></div>
             <div><dt>Unknown</dt><dd>Not the registered name. No pay button.</dd></div>
           </dl>
         </div>
@@ -1369,7 +1375,7 @@ export async function receiptPage(id) {
             ${fee > 0n ? `<div class="fact-row"><dt>Net to payee</dt><dd>${esc(formatUnits(net))}</dd></div>` : ""}
             <div class="fact-row"><dt>Paid</dt><dd>${esc(when(paidAt))}</dd></div>
             <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(chainId))}</dd></div>
-            <div class="fact-row"><dt>Transaction</dt><dd class="mono">${href ? `<a href="${esc(href)}" rel="noopener">${esc(hash)}</a>` : esc(hash || "Not indexed")}</dd></div>
+            <div class="fact-row"><dt>Transaction</dt><dd class="mono" data-tx="${esc(hash || "")}">${href ? `<a href="${esc(href)}" rel="noopener" title="${esc(hash)}">${esc(shortHash(hash))}</a>` : esc(hash ? shortHash(hash) : "Not indexed")}</dd></div>
           </dl>
         </div>
         <div class="doc-body">
