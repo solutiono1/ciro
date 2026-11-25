@@ -13,17 +13,17 @@ test("the sdk reads and prepares against a local chain", async (t) => {
   assert.equal(meta.chainId, 31337);
   assert.equal(meta.symbol, "tUSD8");
 
-  const reg = await client.prepareRegister("Ada Okonkwo");
-  assert.equal(reg.summary, 'Register "Ada Okonkwo"');
+  const reg = await client.prepareRegister("Elena Rossi");
+  assert.equal(reg.summary, 'Register "Elena Rossi"');
   await sendUnsigned(fx.signer(1), fx.publicClient, reg);
 
   const payee = fx.accounts[1].address;
   const who = await client.payee(payee);
   assert.equal(who.registered, true);
-  assert.equal(who.name, "Ada Okonkwo");
+  assert.equal(who.name, "Elena Rossi");
 
-  assert.equal((await client.check(payee, "ada  okonkwo")).result, "exact");
-  assert.equal((await client.check(payee, "Ada Okonkwoo")).result, "close");
+  assert.equal((await client.check(payee, "elena  rossi")).result, "exact");
+  assert.equal((await client.check(payee, "Elena Rossio")).result, "close");
 
   await assert.rejects(
     () => client.invoice(99),

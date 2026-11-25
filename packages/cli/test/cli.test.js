@@ -45,7 +45,7 @@ test("a world-readable key is refused and not printed", async () => {
     chainId: 31337,
     keyPath,
   }));
-  const result = await run(["register", "Ada Okonkwo", "--yes"], { CIRO_CONFIG: config, HOME: dir });
+  const result = await run(["register", "Elena Rossi", "--yes"], { CIRO_CONFIG: config, HOME: dir });
   assert.equal(result.code, 1);
   assert.match(result.stderr, /mode 0600/);
   assert.equal(result.stdout.includes(key), false);
@@ -72,9 +72,9 @@ test("cli signs locally and will not sign a close name", async (t) => {
   const env = { CIRO_CONFIG: configPath, HOME: dir };
   writeConfig(payeeKey);
 
-  let result = await run(["register", "Ada Okonkwo", "--yes"], env);
+  let result = await run(["register", "Elena Rossi", "--yes"], env);
   assert.equal(result.code, 0, result.stderr);
-  assert.match(result.stdout, /Register "Ada Okonkwo"/);
+  assert.match(result.stdout, /Register "Elena Rossi"/);
   assert.match(result.stdout, /0x[0-9a-f]{64}/);
   assert.equal(result.stdout.includes(fx.keys[1]), false);
   assert.equal(result.stderr.includes(fx.keys[1]), false);
@@ -99,7 +99,7 @@ test("cli signs locally and will not sign a close name", async (t) => {
     rpcUrl: fx.rpcUrl,
     chainId: 31337,
   }));
-  result = await run(["check", "--payee", fx.accounts[1].address, "--name", "Ada Okonkwa"], {
+  result = await run(["check", "--payee", fx.accounts[1].address, "--name", "Elena Rossa"], {
     CIRO_CONFIG: checkConfig,
     HOME: dir,
   });
@@ -114,7 +114,7 @@ test("cli signs locally and will not sign a close name", async (t) => {
     functionName: "balanceOf",
     args: [fx.accounts[2].address],
   });
-  result = await run(["pay", "1", "--name", "Ada Okonkwa", "--yes"], env);
+  result = await run(["pay", "1", "--name", "Elena Rossa", "--yes"], env);
   assert.equal(result.code, 1);
   assert.match(result.stderr, /name_mismatch close/);
   assert.equal(result.stdout.includes(fx.keys[2]), false);
@@ -127,14 +127,14 @@ test("cli signs locally and will not sign a close name", async (t) => {
   });
   assert.equal(afterRefusal, before);
 
-  result = await run(["pay", "1", "--name", "Ada Okonkwo", "--yes"], env);
+  result = await run(["pay", "1", "--name", "Elena Rossi", "--yes"], env);
   assert.equal(result.code, 0, `${result.stderr}\n${result.stdout}`);
   assert.match(result.stdout, /Pay invoice 1, 1\.000000 tUSD8, fee 0/);
   assert.equal(result.stdout.includes(fx.keys[2]), false);
 
   result = await run(["receipt", "1"], env);
   assert.equal(result.code, 0, result.stderr);
-  assert.match(result.stdout, /Payee: Ada Okonkwo/);
+  assert.match(result.stdout, /Payee: Elena Rossi/);
   assert.match(result.stdout, /Amount: 1\.000000 tUSD8/);
   assert.match(result.stdout, /Transaction: 0x[0-9a-f]{64}/);
 });

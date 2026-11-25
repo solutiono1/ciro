@@ -22,9 +22,9 @@ test("fee matches the contract integer division", () => {
 });
 
 test("fold matches the contract rules used by the pay tests", () => {
-  assert.equal(Buffer.from(fold("  ada   okonkwo! ")).toString("utf8"), "ada okonkwo");
-  assert.equal(Buffer.from(fold("Ada Okonkwo")).toString("utf8"), "ada okonkwo");
+  assert.equal(Buffer.from(fold("  elena   rossi! ")).toString("utf8"), "elena rossi");
+  assert.equal(Buffer.from(fold("Elena Rossi")).toString("utf8"), "elena rossi");
   assert.equal(isEmptyName("   !!!"), true);
   assert.equal(isEmptyName("Ada"), false);
-  assert.equal(Buffer.from(fold("ada-okonkwo")).toString("utf8"), "adaokonkwo");
+  assert.equal(Buffer.from(fold("elena-rossi")).toString("utf8"), "elenarossi");
 });

@@ -68,7 +68,7 @@ test("mcp prepares a payment and does not sign or echo a key", async (t) => {
   });
 
   const payee = fx.signer(1);
-  let res = await fx.api("POST", "/v1/tx/register", { name: "Ada Okonkwo" });
+  let res = await fx.api("POST", "/v1/tx/register", { name: "Elena Rossi" });
   await sendUnsigned(payee, fx.publicClient, res.json);
   res = await fx.api("POST", "/v1/tx/invoice", {
     amount: "1000000",
@@ -91,7 +91,7 @@ test("mcp prepares a payment and does not sign or echo a key", async (t) => {
 
   const exact = await session.request("tools/call", {
     name: "ciro_check",
-    arguments: { payee: fx.accounts[1].address, name: "Ada Okonkwo", privateKey: planted },
+    arguments: { payee: fx.accounts[1].address, name: "Elena Rossi", privateKey: planted },
   });
   assert.equal(exact.result.isError, false);
   assert.equal(JSON.parse(toolText(exact)).result, "exact");
@@ -100,7 +100,7 @@ test("mcp prepares a payment and does not sign or echo a key", async (t) => {
 
   const refused = await session.request("tools/call", {
     name: "ciro_prepare_pay",
-    arguments: { id: "1", name: "Ada Okonkwa", privateKey: planted },
+    arguments: { id: "1", name: "Elena Rossa", privateKey: planted },
   });
   assert.equal(refused.result.isError, true);
   const refusedBody = JSON.parse(toolText(refused));
@@ -111,7 +111,7 @@ test("mcp prepares a payment and does not sign or echo a key", async (t) => {
 
   const prepared = await session.request("tools/call", {
     name: "ciro_prepare_pay",
-    arguments: { id: "1", name: "Ada Okonkwo" },
+    arguments: { id: "1", name: "Elena Rossi" },
   });
   assert.equal(prepared.result.isError, false);
   const preparedBody = JSON.parse(toolText(prepared));

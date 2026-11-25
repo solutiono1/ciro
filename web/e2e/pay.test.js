@@ -138,11 +138,11 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
 
     await page.getByRole("link", { name: "Get started" }).click();
     await page.getByRole("button", { name: "Connect" }).click();
-    await page.locator("#name").fill("Ada Okonkwo");
-    await page.waitForFunction(() => document.querySelector("#preview")?.textContent?.includes("ada okonkwo"));
+    await page.locator("#name").fill("Elena Rossi");
+    await page.waitForFunction(() => document.querySelector("#preview")?.textContent?.includes("elena rossi"));
     await page.getByRole("button", { name: "Register" }).click();
     await page.getByRole("heading", { name: "Open invoices" }).waitFor();
-    assert.equal(await page.locator(".who").innerText(), "Ada Okonkwo");
+    assert.equal(await page.locator(".who").innerText(), "Elena Rossi");
 
     await page.getByRole("link", { name: "Invoices" }).click();
     await page.getByRole("heading", { name: "Invoices" }).waitFor();
@@ -171,7 +171,7 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
     await page.getByRole("heading", { name: "Wallet" }).waitFor();
     assert.match(await page.locator("body").innerText(), new RegExp(payee));
     await page.getByRole("link", { name: "Profile" }).click();
-    assert.match(await page.locator(".name").innerText(), /Ada Okonkwo/);
+    assert.match(await page.locator(".name").innerText(), /Elena Rossi/);
     await page.getByRole("link", { name: "Developers" }).click();
     assert.match(await page.locator("pre").first().innerText(), new RegExp(fx.apiUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     await page.getByRole("link", { name: "History" }).click();
@@ -187,18 +187,18 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
     assert.equal(await overflows(page), false);
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    await page.locator("#claimed").fill("Ada Okonkwa");
+    await page.locator("#claimed").fill("Elena Rossa");
     await page.getByText("This is close to the name on the invoice.").waitFor();
     assert.equal(await payButtonCount(page), 0);
 
-    await page.locator("#claimed").fill("Ada Okonkwo");
+    await page.locator("#claimed").fill("Elena Rossi");
     await page.getByText("The name matches.").waitFor();
     await page.getByText("does not hold 1.000000 tUSD8").waitFor();
     assert.equal(await payButtonCount(page), 0);
 
     await page.evaluate(() => window.__ciroE2E.setAccount(1));
     await page.waitForFunction(() => document.querySelector("#claimed")?.value === "");
-    await page.locator("#claimed").fill("Ada Okonkwo");
+    await page.locator("#claimed").fill("Elena Rossi");
     await page.getByRole("button", { name: "Pay 1.000000 tUSD8" }).waitFor();
 
     await Promise.all([
@@ -206,7 +206,7 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
       page.evaluate(() => window.__ciroE2E.setChain(1)).catch(() => {}),
     ]);
     await page.getByLabel("Name you were told").waitFor();
-    await page.locator("#claimed").fill("Ada Okonkwo");
+    await page.locator("#claimed").fill("Elena Rossi");
     await page.getByRole("button", { name: "Switch to Chain 31337" }).waitFor();
     assert.equal(await payButtonCount(page), 0);
 
@@ -215,11 +215,11 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
       page.getByRole("button", { name: "Switch to Chain 31337" }).click().catch(() => {}),
     ]);
     await page.getByLabel("Name you were told").waitFor();
-    await page.locator("#claimed").fill("Ada Okonkwo");
+    await page.locator("#claimed").fill("Elena Rossi");
     await page.getByRole("button", { name: "Pay 1.000000 tUSD8" }).click();
     await page.getByText("Receipt 1").waitFor();
     assert.match(await page.locator("body").innerText(), /1\.000000/);
-    assert.match(await page.locator("body").innerText(), /Ada Okonkwo/);
+    assert.match(await page.locator("body").innerText(), /Elena Rossi/);
     assert.match(await page.locator("body").innerText(), /March design/);
     assert.match(await page.locator("body").innerText(), /0x[0-9a-fA-F]{8}…[0-9a-fA-F]{6}/);
     assert.match(await page.locator("[data-tx]").getAttribute("data-tx"), /^0x[0-9a-fA-F]{64}$/);

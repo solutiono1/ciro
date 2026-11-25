@@ -17,16 +17,16 @@ const ciro = (functionName, args) => encodeFunctionData({ abi: ciroAbi, function
 const tokenCall = (functionName, args) => encodeFunctionData({ abi: tokenAbi, functionName, args });
 
 test("the pay step must match the invoice and the typed name", () => {
-  const data = ciro("pay", [1n, "Ada Okonkwo"]);
-  assert.doesNotThrow(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Ada Okonkwo" }));
-  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "2", name: "Ada Okonkwo" }), /invoice/);
-  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Ada Okonkwa" }), /name/);
+  const data = ciro("pay", [1n, "Elena Rossi"]);
+  assert.doesNotThrow(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Elena Rossi" }));
+  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "2", name: "Elena Rossi" }), /invoice/);
+  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Elena Rossa" }), /name/);
   assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "approve", amount: "1000000" }), /different action/);
 });
 
 test("payFromAllowance is not accepted by the direct pay page", () => {
-  const data = ciro("payFromAllowance", [1n, "Ada Okonkwo"]);
-  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Ada Okonkwo" }), /does not use/);
+  const data = ciro("payFromAllowance", [1n, "Elena Rossi"]);
+  assert.throws(() => verifyStep(step(contract, data), deployment, { kind: "pay", id: "1", name: "Elena Rossi" }), /does not use/);
 });
 
 test("an approval must target Ciro and the invoice amount", () => {
@@ -43,15 +43,15 @@ test("an approval must target Ciro and the invoice amount", () => {
 });
 
 test("the chain and target are pinned", () => {
-  const data = ciro("pay", [1n, "Ada Okonkwo"]);
-  assert.throws(() => verifyStep(step(contract, data, 1), deployment, { kind: "pay", id: "1", name: "Ada Okonkwo" }), /wrong network/);
-  assert.throws(() => verifyStep(step(token, data), deployment, { kind: "pay", id: "1", name: "Ada Okonkwo" }), /not a token call/);
-  assert.throws(() => verifyStep(step("0x0000000000000000000000000000000000000001", data), deployment, { kind: "pay", id: "1", name: "Ada Okonkwo" }), /unknown contract/);
+  const data = ciro("pay", [1n, "Elena Rossi"]);
+  assert.throws(() => verifyStep(step(contract, data, 1), deployment, { kind: "pay", id: "1", name: "Elena Rossi" }), /wrong network/);
+  assert.throws(() => verifyStep(step(token, data), deployment, { kind: "pay", id: "1", name: "Elena Rossi" }), /not a token call/);
+  assert.throws(() => verifyStep(step("0x0000000000000000000000000000000000000001", data), deployment, { kind: "pay", id: "1", name: "Elena Rossi" }), /unknown contract/);
 });
 
 test("register and revoke must match the form", () => {
-  const register = ciro("register", ["Ada Okonkwo"]);
-  assert.doesNotThrow(() => verifyStep(step(contract, register), deployment, { kind: "register", name: "Ada Okonkwo" }));
+  const register = ciro("register", ["Elena Rossi"]);
+  assert.doesNotThrow(() => verifyStep(step(contract, register), deployment, { kind: "register", name: "Elena Rossi" }));
   assert.throws(() => verifyStep(step(contract, register), deployment, { kind: "register", name: "Bob" }), /registration/);
 
   const revoke = ciro("revoke", ["0x0000000000000000000000000000000000000002"]);

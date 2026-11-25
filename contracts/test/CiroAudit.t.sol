@@ -73,19 +73,19 @@ contract CiroAuditTest is Test {
     }
 
     function test_payAtExactlyDueSucceeds() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         uint256 id = _create(payee, 1_000_000, "due boundary");
         (, , , uint64 due, , , , ) = ciro.getInvoice(id);
         _fund(payer, 1_000_000);
 
         vm.warp(due);
         vm.prank(payer);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
         assertEq(token.balanceOf(payee), 1_000_000);
     }
 
     function test_payOneSecondAfterDueReverts() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         uint256 id = _create(payee, 1_000_000, "due boundary");
         (, , , uint64 due, , , , ) = ciro.getInvoice(id);
         _fund(payer, 1_000_000);
@@ -93,11 +93,11 @@ contract CiroAuditTest is Test {
         vm.warp(due + 1);
         vm.prank(payer);
         vm.expectRevert(Ciro.PastDue.selector);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
     }
 
     function test_allowanceAtExactlyExpirySucceeds() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         uint256 id = _create(payee, 1_000_000, "expiry boundary");
         uint64 expiry = uint64(block.timestamp + 1 hours);
         vm.prank(payee);
@@ -106,12 +106,12 @@ contract CiroAuditTest is Test {
 
         vm.warp(expiry);
         vm.prank(agent);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
         assertEq(token.balanceOf(payee), 1_000_000);
     }
 
     function test_allowanceOneSecondAfterExpiryReverts() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         uint256 id = _create(payee, 1_000_000, "expiry boundary");
         uint64 expiry = uint64(block.timestamp + 1 hours);
         vm.prank(payee);
@@ -121,38 +121,38 @@ contract CiroAuditTest is Test {
         vm.warp(expiry + 1);
         vm.prank(agent);
         vm.expectRevert(Ciro.AllowanceExpired.selector);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
     }
 
     function test_partialCapAccumulatesAndStopsAtTheLimit() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         vm.prank(payee);
         ciro.allow(agent, 1_000_000, uint64(block.timestamp + 1 days));
         _fund(agent, 1_000_000);
 
         uint256 first = _create(payee, 600_000, "first");
         vm.prank(agent);
-        ciro.payFromAllowance(first, "Ada Okonkwo");
+        ciro.payFromAllowance(first, "Elena Rossi");
         (uint256 remaining, , , ) = ciro.allowances(payee, agent);
         assertEq(remaining, 400_000);
 
         uint256 second = _create(payee, 500_000, "second");
         vm.prank(agent);
         vm.expectRevert(Ciro.CapExceeded.selector);
-        ciro.payFromAllowance(second, "Ada Okonkwo");
+        ciro.payFromAllowance(second, "Elena Rossi");
         (remaining, , , ) = ciro.allowances(payee, agent);
         assertEq(remaining, 400_000);
     }
 
     function test_reAllowResetsRemainingToTheNewFullCap() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         vm.prank(payee);
         ciro.allow(agent, 600_000, uint64(block.timestamp + 1 days));
         _fund(agent, 1_000_000);
 
         uint256 id = _create(payee, 400_000, "spend part of the cap");
         vm.prank(agent);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
         (uint256 remaining, , , ) = ciro.allowances(payee, agent);
         assertEq(remaining, 200_000);
 
@@ -163,7 +163,7 @@ contract CiroAuditTest is Test {
     }
 
     function test_zeroCapAndPastExpiryFailSafe() public {
-        _register(payee, "Ada Okonkwo");
+        _register(payee, "Elena Rossi");
         uint256 id = _create(payee, 1, "fail safe");
         _fund(agent, 1);
 
@@ -171,19 +171,19 @@ contract CiroAuditTest is Test {
         ciro.allow(agent, 0, uint64(block.timestamp + 1 days));
         vm.prank(agent);
         vm.expectRevert(Ciro.CapExceeded.selector);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
 
         vm.prank(payee);
         ciro.allow(agent, 1, uint64(block.timestamp - 1));
         vm.prank(agent);
         vm.expectRevert(Ciro.AllowanceExpired.selector);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
     }
 
     function test_feeTransfersSumToTheInvoiceAmount() public {
         Ciro priced = new Ciro(address(token), feeTo, 50);
         vm.prank(payee);
-        priced.register("Ada Okonkwo");
+        priced.register("Elena Rossi");
         vm.prank(payee);
         uint256 id = priced.create(1_000_000, "fee", uint64(block.timestamp + 1 days));
 
@@ -191,7 +191,7 @@ contract CiroAuditTest is Test {
         vm.prank(payer);
         token.approve(address(priced), 1_000_000);
         vm.prank(payer);
-        priced.pay(id, "Ada Okonkwo");
+        priced.pay(id, "Elena Rossi");
 
         assertEq(token.balanceOf(payer), 0);
         assertEq(token.balanceOf(payee), 995_000);
@@ -203,17 +203,17 @@ contract CiroAuditTest is Test {
         HookToken hook = new HookToken();
         Ciro hooked = new Ciro(address(hook), feeTo, 0);
         vm.prank(payee);
-        hooked.register("Ada Okonkwo");
+        hooked.register("Elena Rossi");
         vm.prank(payee);
         uint256 id = hooked.create(1_000_000, "hook", uint64(block.timestamp + 1 days));
 
         hook.mint(payer, 1_000_000);
         vm.prank(payer);
         hook.approve(address(hooked), 1_000_000);
-        hook.setHook(hooked, id, "Ada Okonkwo");
+        hook.setHook(hooked, id, "Elena Rossi");
 
         vm.prank(payer);
-        hooked.pay(id, "Ada Okonkwo");
+        hooked.pay(id, "Elena Rossi");
 
         assertTrue(hook.reentered());
         assertEq(hook.balanceOf(payee), 1_000_000);

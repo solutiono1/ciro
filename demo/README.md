@@ -34,7 +34,7 @@ This records the live site at `https://ciro-a9s.pages.dev`, not a mockup:
   the deployer for gas.
 - The deployer in `.deploy-key` is the payer. It needs at least 1.0 tUSD8 and
   gas for the payment.
-- The payee registers `Ada Okonkwo`, creates a 1.0 tUSD8 invoice, switches to the
+- The payee registers `Elena Rossi`, creates a 1.0 tUSD8 invoice, switches to the
   payer, types a close name, shows no pay button, then the exact name, pays, and
   opens the verified receipt.
 - The final scene shows the public developers page with the published API, CLI,

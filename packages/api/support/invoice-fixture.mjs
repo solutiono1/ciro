@@ -12,7 +12,7 @@ const wallet = fx.signer(0);
 const pub = fx.publicClient;
 const payee = fx.accounts[0].address;
 
-const reg = await fx.api("POST", "/v1/tx/register", { name: "Ada Okonkwo" });
+const reg = await fx.api("POST", "/v1/tx/register", { name: "Elena Rossi" });
 if (reg.status !== 200) throw new Error("register failed: " + JSON.stringify(reg.json));
 await sendUnsigned(wallet, pub, reg.json);
 

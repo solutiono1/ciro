@@ -22,9 +22,9 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   assert.equal(res.json.error, "empty_name");
   assert.equal("data" in res.json, false);
 
-  res = await fx.api("POST", "/v1/tx/register", { name: "Ada Okonkwo" });
+  res = await fx.api("POST", "/v1/tx/register", { name: "Elena Rossi" });
   assert.equal(res.status, 200, JSON.stringify(res.json));
-  assert.equal(res.json.summary, 'Register "Ada Okonkwo"');
+  assert.equal(res.json.summary, 'Register "Elena Rossi"');
   assert.equal(res.json.value, "0");
   await sendUnsigned(payee, fx.publicClient, res.json);
 
@@ -35,16 +35,16 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
     args: [payeeAddress],
   });
   const nameHash = stored.nameHash ?? stored[0];
-  assert.equal(nameHash, keccak256(fold("Ada Okonkwo")));
+  assert.equal(nameHash, keccak256(fold("Elena Rossi")));
 
   res = await fx.api("GET", `/v1/payees/${payeeAddress.toLowerCase()}`);
   assert.equal(res.status, 200);
   assert.equal(res.json.registered, true);
-  assert.equal(res.json.name, "Ada Okonkwo");
+  assert.equal(res.json.name, "Elena Rossi");
 
-  res = await fx.api("POST", "/v1/check", { payee: payeeAddress, name: "  ada   okonkwo! " });
+  res = await fx.api("POST", "/v1/check", { payee: payeeAddress, name: "  elena   rossi! " });
   assert.equal(res.json.result, "exact");
-  res = await fx.api("POST", "/v1/check", { payee: payeeAddress, name: "Ada Okonkwa" });
+  res = await fx.api("POST", "/v1/check", { payee: payeeAddress, name: "Elena Rossa" });
   assert.equal(res.json.result, "close");
   res = await fx.api("POST", "/v1/check", { payee: payeeAddress, name: "Bob" });
   assert.equal(res.json.result, "none");
@@ -73,7 +73,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
 
   res = await fx.api("GET", "/v1/invoices/1");
   assert.equal(res.json.reference, "March design");
-  assert.equal(res.json.payeeName, "Ada Okonkwo");
+  assert.equal(res.json.payeeName, "Elena Rossi");
   assert.equal(res.json.amount, "1000000");
   assert.equal(res.json.status, "open");
   assert.equal(res.json.payer, null);
@@ -86,7 +86,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   assert.equal(res.status, 404);
   assert.equal(res.json.error, "not_paid");
 
-  res = await fx.api("POST", "/v1/tx/pay", { id: "1", name: "Ada Okonkwa", payer: payerAddress });
+  res = await fx.api("POST", "/v1/tx/pay", { id: "1", name: "Elena Rossa", payer: payerAddress });
   assert.equal(res.status, 409);
   assert.equal(res.json.error, "name_mismatch");
   assert.equal(res.json.result, "close");
@@ -97,7 +97,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   assert.equal(res.json.error, "unknown_invoice");
 
   await fx.mint(2, 1_000_000n);
-  res = await fx.api("POST", "/v1/tx/pay", { id: "1", name: "  ada   okonkwo! ", payer: payerAddress });
+  res = await fx.api("POST", "/v1/tx/pay", { id: "1", name: "  elena   rossi! ", payer: payerAddress });
   assert.equal(res.status, 200, JSON.stringify(res.json));
   assert.equal(res.json.summary, "Pay invoice 1, 1.000000 tUSD8, fee 0");
   assert.equal(res.json.approvals.length, 1);
@@ -107,7 +107,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   res = await fx.api("GET", "/v1/receipts/1");
   assert.equal(res.status, 200, JSON.stringify(res.json));
   assert.equal(res.json.transactionHash, paid.transactionHash);
-  assert.equal(res.json.payeeName, "Ada Okonkwo");
+  assert.equal(res.json.payeeName, "Elena Rossi");
   assert.equal(res.json.fee, "0");
   assert.equal(res.json.net, "1000000");
   assert.equal(res.json.netDisplay, "1.000000");
@@ -139,7 +139,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
   assert.equal(res.status, 409, JSON.stringify(res.json));
   assert.equal(res.json.error, "past_due");
 
-  res = await fx.api("POST", "/v1/tx/register", { name: "Ada\nOkonkwo" });
+  res = await fx.api("POST", "/v1/tx/register", { name: "Elena\nRossi" });
   assert.equal(res.status, 400, JSON.stringify(res.json));
   assert.equal(res.json.error, "bad_request");
 
@@ -165,7 +165,7 @@ test("api prepares unsigned transactions and refuses a close name", async (t) =>
 
   res = await fx.api("POST", "/v1/tx/register", { name: "Ada Mensah" });
   await sendUnsigned(payee, fx.publicClient, res.json);
-  res = await fx.api("POST", "/v1/invoices/1/check", { name: "Ada Okonkwo" });
+  res = await fx.api("POST", "/v1/invoices/1/check", { name: "Elena Rossi" });
   assert.equal(res.json.result, "exact");
   res = await fx.api("POST", "/v1/invoices/1/check", { name: "Ada Mensah" });
   assert.equal(res.json.result, "none");

@@ -20,7 +20,7 @@ contract CiroTest is Test {
 
     function _register() internal {
         vm.prank(payee);
-        ciro.register("Ada Okonkwo");
+        ciro.register("Elena Rossi");
     }
 
     function _invoice() internal returns (uint256 id) {
@@ -39,23 +39,23 @@ contract CiroTest is Test {
         uint256 id = _invoice();
         _fund(payer, 1_000_000);
         vm.prank(payer);
-        ciro.pay(id, "  ada   okonkwo! ");
+        ciro.pay(id, "  elena   rossi! ");
         assertEq(token.balanceOf(payee), 1_000_000);
         assertEq(token.balanceOf(payer), 0);
         (, , address paidBy, , uint64 paidAt, , , string memory name) = ciro.getInvoice(id);
         assertEq(paidBy, payer);
         assertGt(paidAt, 0);
-        assertEq(name, "Ada Okonkwo");
+        assertEq(name, "Elena Rossi");
     }
 
     function test_closeNameDoesNotPay() public {
         _register();
         uint256 id = _invoice();
         _fund(payer, 1_000_000);
-        assertEq(uint256(ciro.checkInvoice(id, "Ada Okonkwa")), uint256(Ciro.Result.Close));
+        assertEq(uint256(ciro.checkInvoice(id, "Elena Rossa")), uint256(Ciro.Result.Close));
         vm.prank(payer);
         vm.expectRevert(abi.encodeWithSelector(Ciro.NameMismatch.selector, Ciro.Result.Close));
-        ciro.pay(id, "Ada Okonkwa");
+        ciro.pay(id, "Elena Rossa");
         assertEq(token.balanceOf(payee), 0);
         assertEq(token.balanceOf(payer), 1_000_000);
     }
@@ -78,13 +78,13 @@ contract CiroTest is Test {
         vm.warp(block.timestamp + 8 days);
         vm.prank(payer);
         vm.expectRevert(Ciro.PastDue.selector);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
         vm.warp(block.timestamp - 8 days);
         vm.prank(payer);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
         vm.prank(payer);
         vm.expectRevert(Ciro.AlreadyPaid.selector);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
     }
 
     function test_expiredAllowanceDoesNotPay() public {
@@ -96,7 +96,7 @@ contract CiroTest is Test {
         vm.warp(block.timestamp + 2 hours);
         vm.prank(agent);
         vm.expectRevert(Ciro.AllowanceExpired.selector);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
         assertEq(token.balanceOf(agent), 1_000_000);
         assertEq(token.balanceOf(payee), 0);
     }
@@ -104,14 +104,14 @@ contract CiroTest is Test {
     function test_feeIsTakenWhenConfigured() public {
         Ciro priced = new Ciro(address(token), feeTo, 50);
         vm.prank(payee);
-        priced.register("Ada Okonkwo");
+        priced.register("Elena Rossi");
         vm.prank(payee);
         uint256 id = priced.create(1_000_000, "fee", uint64(block.timestamp + 1 days));
         token.mint(payer, 1_000_000);
         vm.prank(payer);
         token.approve(address(priced), type(uint256).max);
         vm.prank(payer);
-        priced.pay(id, "Ada Okonkwo");
+        priced.pay(id, "Elena Rossi");
         assertEq(token.balanceOf(payee), 995_000);
         assertEq(token.balanceOf(feeTo), 5_000);
     }
@@ -123,7 +123,7 @@ contract CiroTest is Test {
         ciro.allow(agent, 1_000_000, uint64(block.timestamp + 1 days));
         _fund(agent, 1_000_000);
         vm.prank(agent);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
         assertEq(token.balanceOf(payee), 1_000_000);
         (uint256 remaining,,,) = ciro.allowances(payee, agent);
         assertEq(remaining, 0);
@@ -132,7 +132,7 @@ contract CiroTest is Test {
         uint256 second = ciro.create(1, "again", uint64(block.timestamp + 1 days));
         vm.prank(agent);
         vm.expectRevert(Ciro.CapExceeded.selector);
-        ciro.payFromAllowance(second, "Ada Okonkwo");
+        ciro.payFromAllowance(second, "Elena Rossi");
     }
 
     function test_revokedAllowanceAndForeignInvoice() public {
@@ -154,7 +154,7 @@ contract CiroTest is Test {
         ciro.revoke(agent);
         vm.prank(agent);
         vm.expectRevert(Ciro.AllowanceIsRevoked.selector);
-        ciro.payFromAllowance(id, "Ada Okonkwo");
+        ciro.payFromAllowance(id, "Elena Rossi");
     }
 
     function test_emptyNameAndUnregisteredCreate() public {
@@ -172,13 +172,13 @@ contract CiroTest is Test {
         vm.prank(payee);
         ciro.register("Ada Mensah");
         assertEq(uint256(ciro.check(payee, "Ada Mensah")), uint256(Ciro.Result.Exact));
-        assertEq(uint256(ciro.checkInvoice(id, "Ada Okonkwo")), uint256(Ciro.Result.Exact));
+        assertEq(uint256(ciro.checkInvoice(id, "Elena Rossi")), uint256(Ciro.Result.Exact));
         assertEq(uint256(ciro.checkInvoice(id, "Ada Mensah")), uint256(Ciro.Result.None));
         _fund(payer, 1_000_000);
         vm.prank(payer);
-        ciro.pay(id, "Ada Okonkwo");
+        ciro.pay(id, "Elena Rossi");
         (, , , , , , , string memory name) = ciro.getInvoice(id);
-        assertEq(name, "Ada Okonkwo");
+        assertEq(name, "Elena Rossi");
     }
 
     function test_constructorRejectsHighFee() public {
