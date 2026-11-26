@@ -3,6 +3,7 @@ import { formatUnits } from "../../shared/src/money.js";
 import { tokenAbi } from "./abi.js";
 import { eventLogs, loadMeta, read } from "./chain.js";
 import { faucetSnapshot } from "./faucet.js";
+import { isLegacyTestAddress } from "./legacy.js";
 import { readTelemetry, telemetryEnabled } from "./telemetry.js";
 
 const registeredEvent = parseAbiItem("event Registered(address indexed payee, bytes32 nameHash)");
@@ -98,8 +99,10 @@ async function computeStatsFresh(state, env = null) {
     }
   }
   const userRows = [...users.values()];
-  const new7d = userRows.filter((row) => row.firstAt && row.firstAt >= now - 7 * DAY).length;
-  const new30d = userRows.filter((row) => row.firstAt && row.firstAt >= now - 30 * DAY).length;
+  const legacyUsers = userRows.filter((row) => isLegacyTestAddress(row.address)).length;
+  const publicRows = userRows.filter((row) => !isLegacyTestAddress(row.address));
+  const new7d = publicRows.filter((row) => row.firstAt && row.firstAt >= now - 7 * DAY).length;
+  const new30d = publicRows.filter((row) => row.firstAt && row.firstAt >= now - 30 * DAY).length;
 
   const createdById = new Map();
   for (const log of created) createdById.set(log.args.id.toString(), log);
@@ -175,6 +178,8 @@ async function computeStatsFresh(state, env = null) {
     },
     users: {
       total: userRows.length,
+      public: userRows.length - legacyUsers,
+      legacy: legacyUsers,
       new7d,
       new30d,
       repeatPayees,

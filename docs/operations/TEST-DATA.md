@@ -34,6 +34,25 @@ demo settled on **Elena Rossi**. Those names are on chain and cannot be edited.
 They are not part of the demo and are not linked anywhere public. Invoice 8 is
 the paid receipt used for screenshots and receipt checks.
 
+## Public directory
+
+The app keeps one current owner per folded name for new registrations. The v1
+contract cannot enforce that rule, so a few build-period addresses still hold
+the same folded name. The public directory hides those rows so old test data
+does not read as real users; the `check` endpoint still treats the folded name
+as taken. The hidden addresses are listed in
+`packages/api/src/legacy.js` and are:
+
+- `0x405dfE6F2c29e794B2799946ffcbeF4Da7D3eC70`
+- `0x42365E1f1f2dD8815cC7B324f7D2b0Ed011c3292`
+- `0x92cf6f88d9846C9aEcaE818cd811Ca45B9Ae90C7`
+- `0x0B43c122422305FebDc59936c58C14c46625b97A`
+- `0x8Ee4ECE52e9286958FF16C26035Cc73030F557B7`
+- `0xDaCf93b7F0c9fA3AF61CD27C1Fe382F29ba4b724`
+
+The demo payee `0xF69e6400b9c93B36d0730B3643f82fE54810498C` and the real
+registered account stay visible. The explorer still shows every registration.
+
 ## v1 limits
 
 - No `cancel` or `void`. A payee cannot close an open invoice.

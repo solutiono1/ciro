@@ -2,6 +2,7 @@ import { encodeEventTopics, getAddress, parseAbiItem } from "viem";
 import { fold } from "../../shared/src/normalize.js";
 import { ApiError } from "./errors.js";
 import { eventLogs, read } from "./chain.js";
+import { isLegacyTestAddress } from "./legacy.js";
 
 // The v1 contract stores a name per address but cannot make the folded name
 // unique across addresses. The app adds that rule for every registration it
@@ -55,10 +56,13 @@ export async function nameDirectory(state) {
       name,
       folded,
       registeredAt: entry.at || null,
+      hidden: isLegacyTestAddress(entry.address),
     });
   }));
 
-  rows.sort((a, b) => a.folded.localeCompare(b.folded) || a.address.localeCompare(b.address));
+  rows.sort((a, b) => a.folded.localeCompare(b.folded)
+    || (b.registeredAt || 0) - (a.registeredAt || 0)
+    || a.address.localeCompare(b.address));
   state.nameCache = { at: Date.now(), rows };
   return rows;
 }
@@ -105,27 +109,50 @@ export async function checkName(state, name, account = null) {
   const folded = foldedName(name);
   if (!folded) throw new ApiError(400, "empty_name");
   const rows = await nameDirectory(state);
-  const owner = rows.find((row) => row.folded === folded) || null;
-  const available = !owner || sameAddress(owner.address, account);
+  const matches = rows.filter((row) => row.folded === folded);
+  // Prefer a current, non-legacy owner for the address the UI shows. An owner
+  // can still re-register their own name, including a legacy test owner.
+  const owner = matches.find((row) => !row.hidden) || matches[0] || null;
+  const ownedByYou = Boolean(account && matches.some((row) => sameAddress(row.address, account)));
+  const available = matches.length === 0 || ownedByYou;
   return {
     name,
     folded,
     available,
     owner: owner?.address ?? null,
-    ownedByYou: Boolean(owner && account && sameAddress(owner.address, account)),
+    ownedByYou,
+    owners: matches.length,
     suggestions: available ? [] : suggestionsFor(name, rows),
   };
 }
 
 export async function nameList(state) {
   const rows = await nameDirectory(state);
+  // Group by folded name. The newest visible registration is the canonical
+  // row; legacy test rows stay taken but are not listed. A name with no
+  // visible owner is omitted from the public directory.
+  const groups = new Map();
+  for (const row of rows) {
+    const group = groups.get(row.folded) || [];
+    group.push(row);
+    groups.set(row.folded, group);
+  }
+  const names = [];
+  for (const group of groups.values()) {
+    const canonical = group.find((row) => !row.hidden);
+    if (!canonical) continue;
+    names.push({
+      address: canonical.address,
+      name: canonical.name,
+      folded: canonical.folded,
+      registeredAt: canonical.registeredAt,
+      owners: group.length,
+    });
+  }
+  names.sort((a, b) => a.folded.localeCompare(b.folded));
   return {
-    names: rows.map((row) => ({
-      address: row.address,
-      name: row.name,
-      folded: row.folded,
-      registeredAt: row.registeredAt,
-    })),
-    total: rows.length,
+    names,
+    total: names.length,
+    hidden: rows.length - names.length,
   };
 }

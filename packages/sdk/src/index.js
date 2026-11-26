@@ -76,8 +76,10 @@ export class CiroClient {
     return this.request("POST", "/v1/check", { payee, name });
   }
 
-  prepareRegister(name) {
-    return this.request("POST", "/v1/tx/register", { name });
+  prepareRegister(name, { address } = {}) {
+    const body = { name };
+    if (address) body.address = address;
+    return this.request("POST", "/v1/tx/register", body);
   }
 
   prepareInvoice({ amount, reference, due }) {

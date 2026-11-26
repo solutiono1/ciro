@@ -2063,7 +2063,7 @@ export async function statsPage() {
         ${metric("Paid volume", `${inv.paidVolumeDisplay} tUSD8`, `${inv.paid} paid invoices`)}
         ${metric("Invoices", String(inv.total), `${inv.open} open · ${inv.pastDue} past due`)}
         ${metric("Paid conversion", pct(inv.conversion), `${inv.paid} of ${inv.total}`)}
-        ${metric("Registered names", String(users.total), `${users.new7d} new in 7 days`)}
+        ${metric("Registered names", String(users.public ?? users.total), `${users.legacy ?? 0} legacy test addresses hidden`)}
       </section>
 
       <section class="stats-grid">
@@ -2082,6 +2082,8 @@ export async function statsPage() {
           <p class="bracket">[ People ]</p>
           <dl class="facts">
             <div class="fact-row"><dt>Total registered</dt><dd>${users.total}</dd></div>
+            <div class="fact-row"><dt>Public names</dt><dd>${users.public ?? users.total}</dd></div>
+            <div class="fact-row"><dt>Legacy test addresses</dt><dd>${users.legacy ?? 0}</dd></div>
             <div class="fact-row"><dt>New in 7 days</dt><dd>${users.new7d}</dd></div>
             <div class="fact-row"><dt>New in 30 days</dt><dd>${users.new30d}</dd></div>
             <div class="fact-row"><dt>Repeat payees</dt><dd>${users.repeatPayees}</dd></div>
@@ -2162,6 +2164,7 @@ export async function namesPage() {
       </form>
       <p id="name-result" class="name-status mt-16" role="status" aria-live="polite"></p>
       <h2 class="h2 section-title">${data.total} registered</h2>
+      ${data.hidden ? `<p class="fineprint">${data.hidden} registration${data.hidden === 1 ? "" : "s"} from the build-period recordings are hidden here. They stay taken on chain; the explorer remains the source of truth.</p>` : ""}
       <ul class="card rows" id="name-rows">
         ${data.names.length ? data.names.map((row) => `
           <li><a class="row" href="${esc(explorerAddress(row.address) || "#/names")}" ${explorerAddress(row.address) ? 'target="_blank" rel="noopener"' : ""}>

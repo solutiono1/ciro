@@ -192,7 +192,7 @@ export async function main(argv, options = {}) {
     if (command === "register") {
       const name = parsed.positional.slice(1).join(" ");
       if (!name) throw new Error("usage: ciro register <name>");
-      tx = await callApi(config, "POST", "/v1/tx/register", { name });
+      tx = await callApi(config, "POST", "/v1/tx/register", { name, address: account.address });
     } else if (command === "invoice") {
       if (!parsed.flags.amount || parsed.flags.reference === undefined || !parsed.flags.due) {
         throw new Error("usage: ciro invoice --amount <tUSD8> --reference <text> --due <YYYY-MM-DD>");
