@@ -277,9 +277,10 @@ cd contracts && forge test
 ## Demo video
 
 <https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4> — 1:51.6, no login,
-narrated. It shows the landing page, registration, invoice creation, the
-close-name refusal, the exact-name payment, the verified receipt with a real
-transaction hash, and the API/CLI/MCP/SDK documentation.
+narrated. It shows the landing page, the taken-name refusal with suggestions,
+registration, a 0.2 tUSD8 invoice, the close-name refusal, the exact-name
+payment, the verified receipt with a real transaction hash, the
+API/CLI/MCP/SDK documentation, the Control Room, and the name directory.
 
 A 23-second supplement shows the post-demo v1 additions: the in-app faucet,
 Docs copy buttons, receipt CSV/print, and the disconnect that survives a reload —
