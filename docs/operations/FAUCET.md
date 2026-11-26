@@ -10,7 +10,7 @@ try the flow without leaving the app or holding mainnet ETH.
 - Default claim: **0.2 tUSD8 + 0.01 tQDAY**
 - Token: tUSD8 `0x456569838f1d43009A91ebA4263147Afd7233483`
 - Network: Aevum testnet, chain 44005
-- The treasury currently holds **1.8 tUSD8**, so it can serve nine claims.
+- The treasury currently holds **1.8 tUSD8** and **~0.187 tQDAY**, enough for nine claims.
 
 The endpoint is `POST /api/v1/faucet` with `{ "address": "0x…" }`.
 
