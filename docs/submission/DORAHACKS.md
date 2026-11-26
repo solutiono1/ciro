@@ -174,7 +174,7 @@ dependency of the core flow.
 
 ## Testnet faucet
 
-The app has a small Ciro faucet, separate from the invoice API. It sends **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury (`0x09257929772176E9c832fC8056A0d9913Ef77a13`), with a 24-hour per-address claim history and a 2-minute global throttle. The user stays on Ciro; there is no redirect and no mainnet-balance check. If the treasury is empty, the official QDay faucet is the fallback.
+The app has a small Ciro faucet, separate from the invoice API. It sends **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury (`0x09257929772176E9c832fC8056A0d9913Ef77a13`), with a 24-hour per-address claim history and a 2-minute global throttle. The user stays on Ciro; there is no redirect and no mainnet-balance check. If the treasury is empty, the app points to the [QDay Discord faucet](https://discord.gg/bYPhjmrSfK) first, then shows the treasury address for voluntary testnet contributions. The official QDay faucet is the fallback.
 
 The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts to an address. It cannot sign invoices, move user funds, or run on mainnet. The key is not in the repository or its history.
 

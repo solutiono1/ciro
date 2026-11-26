@@ -24,8 +24,9 @@ The endpoint is `POST /api/v1/faucet` with `{ "address": "0x…" }`.
   and the gap before a transaction is indexed.
 - **Already funded:** if the address already has the token amount and gas, the
   endpoint returns `already_funded` without sending.
-- **Empty:** if the treasury lacks the token or gas, it returns `faucet_empty`
-  and the UI points to the official QDay faucet as a fallback.
+- **Empty:** if the treasury lacks the token or gas, it returns `faucet_empty`.
+  The UI points to the QDay Discord faucet first, then shows the treasury
+  address for voluntary testnet contributions.
 
 The on-chain/explorer history is the durable limit. A KV or D1 store would add
 another dependency without improving the current testnet scale.
@@ -37,7 +38,7 @@ endpoint reads the balances on the next request. Do not send mainnet assets.
 
 If the treasury is empty:
 
-1. The app shows `faucet_empty` and offers the official QDay faucet.
+1. The app shows `faucet_empty`, the QDay Discord faucet first, and the treasury address for contributions.
 2. Refill the treasury from the project's test allocation.
 3. Confirm the token and gas balances with the explorer.
 4. Re-run a single claim from a test wallet before announcing it.
@@ -106,11 +107,24 @@ Also watch `faucet_empty` and `faucet_failed` rates and explorer errors for the
 claim-history check. Add them to the v2 Control Room with an empty-treasury
 alert. Until then, the scheduled monitor is the alert.
 
+## Exhausted fallback
+
+When the treasury cannot cover a claim, the app returns `faucet_empty` and shows:
+
+1. the [QDay Discord faucet](https://discord.gg/bYPhjmrSfK) first, where
+   verified members can run `/faucet`;
+2. the treasury address for anyone who wants to contribute testnet tUSD8 or
+   tQDAY to refill the shared faucet.
+
+The treasury address is only shown for `faucet_empty`. It is not shown for a
+rate limit, an invalid address, or a temporary RPC failure. Never send mainnet
+assets.
+
 ## Common failures
 
 | Symptom | Cause | Action |
 |---|---|---|
-| `faucet_empty` | Treasury token or gas below the claim | Refill, or use the QDay fallback |
+| `faucet_empty` | Treasury token or gas below the claim | The app shows the QDay Discord faucet first, then the treasury address for testnet contributions |
 | `faucet_rate_limited` | Global two-minute throttle | Wait and retry |
 | `faucet_already_claimed` | Address claimed in the last 24h | Use the QDay fallback or wait |
 | `faucet_offline` | Missing/disabled key, wrong chain, no RPC | Check the Pages secret and env |

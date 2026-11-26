@@ -2,6 +2,7 @@ import { decodeEventLog } from "viem";
 import { ciroAbi } from "../../packages/api/src/abi.js";
 import { api } from "./api.js";
 import { esc, feeLine, feeOf, foldedText, formatFee, formatUnits, parseHuman, receiptCsv, shortAddress, shortHash, when } from "./format.js";
+import { FAUCET_TREASURY, faucetEmptyHtml } from "./faucet-fallback.js";
 import { payDecision } from "./pay-state.js";
 import {
   apiUrl,
@@ -271,7 +272,9 @@ async function requestTestToken(button, statusEl) {
     return true;
   } catch (err) {
     if (statusEl) {
-      if (err.code === "faucet_empty" || err.code === "faucet_offline") {
+      if (err.code === "faucet_empty") {
+        statusEl.innerHTML = faucetEmptyHtml(explorerAddress(FAUCET_TREASURY));
+      } else if (err.code === "faucet_offline") {
         const href = faucetUrl();
         statusEl.innerHTML = `${esc(err.message)}${href ? ` <a href="${esc(href)}" target="_blank" rel="noopener">Open the official QDay faucet</a>` : ""}`;
       } else {

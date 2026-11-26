@@ -1020,3 +1020,9 @@ code { background: var(--surface-inset); padding: 1px 5px; }
   .doc-wrap { max-width: none; padding: 0; }
   .card.deed { border: 0; box-shadow: none; }
 }
+
+/* Exhausted-faucet fallback: Discord first, then a testnet contribution address. */
+.faucet-empty { display: grid; gap: 6px; margin-top: 10px; line-height: 1.55; }
+.faucet-empty strong { color: var(--ink); }
+.faucet-empty .mono { word-break: break-all; }
+.faucet-empty code { font-size: 0.75rem; }

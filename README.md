@@ -227,7 +227,9 @@ Ciro includes a testnet-only faucet so a new user or judge can try the full flow
 
 </div>
 
-**What it does not do.** It is not a bridge, a mint, or a general token source. It takes no fee, needs no API key, and cannot move user funds. It only runs on Aevum testnet; otherwise the app points to the official QDay faucet. The invoice API remains keyless.
+**If it is empty.** The app points to the [QDay Discord faucet](https://discord.gg/bYPhjmrSfK) first. It then shows the treasury address for anyone who wants to help refill the shared testnet faucet. The contribution step is optional; the QDay faucet is the fallback.
+
+**What it does not do.** It is not a bridge, a mint, or a general token source. It takes no fee, needs no API key, and cannot move user funds. It only runs on Aevum testnet. The invoice API remains keyless.
 
 Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Refill it only with testnet tUSD8 or tQDAY.
 
