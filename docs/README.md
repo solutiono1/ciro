@@ -6,6 +6,7 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 
 - [PRD](product/PRD.md) — problem, user, the one flow, and what v1 refuses to be.
 - [UX](design/UX.md) — screens, flows, and the design rules.
+- [Business and readiness](product/BUSINESS.md) — payment flow, customers, revenue model, risks, and mainnet readiness.
 - [v2 plan](product/V2_PLAN.md) — Control Room, account deletion, pause and suspension, contract v2, and mainnet.
 
 ## Build

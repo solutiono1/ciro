@@ -195,6 +195,10 @@ stablecoins, and accountant/bookkeeper referrals. QDay mainnet is scheduled for
 Q1 2027; the v2 plan covers migration, the fee, stablecoin support, and the
 design-partner program.
 
+The fuller founder memo, including the non-custodial payment path, unit
+economics, risks, and honest mainnet-readiness gaps, is in
+[docs/product/BUSINESS.md](../product/BUSINESS.md).
+
 ## Tech stack
 
 - Solidity 0.8.x, Foundry, OpenZeppelin-style patterns.

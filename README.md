@@ -285,7 +285,7 @@ The close-name refusal is shown in the demo and covered by `CiroAudit.t.sol`; a 
 - The allowance cap limits `payFromAllowance`. A spender can always pay with `pay` from its own wallet, so the cap is a budget control, not a hard wallet limit.
 - There is no cancel. An invoice stays payable until its due time; use a short due date for a typo.
 - Invoice memos and payee names are public on chain.
-- Aevum tUSD8 has no public mint. The contract has no faucet. Ciro runs a separate small testnet faucet with a dedicated treasury; it sends a fixed tUSD8 and tQDAY amount from inside the app. If that treasury is empty, the official QDay faucet is the fallback.
+- Aevum tUSD8 has no public mint. The contract has no faucet. Ciro runs a separate small testnet faucet with a dedicated treasury; it sends a fixed tUSD8 and tQDAY amount from inside the app. If that treasury is empty, the app points to the QDay Discord faucet first, then shows the treasury address for voluntary testnet contributions.
 - Invoice and receipt lists cap at 100 rows. There is no indexer; the API scans contract events from `CIRO_START_BLOCK`.
 - The contract is immutable. A fee change or a logic change needs a new deployment.
 - The invoice API holds no key and no database. It can build a transaction, but it cannot sign or recover a payment. The testnet faucet is a separate endpoint with a dedicated testnet-only key.
@@ -299,6 +299,8 @@ The close-name refusal is shown in the demo and covered by `CiroAudit.t.sol`; a 
 - Ship a hosted invoice dashboard for small teams, with the SDK and CLI as the integration path.
 
 Revenue comes from the settlement fee on paid invoices. Reads, the SDK, and the CLI stay free. The first distribution is QDay builders and small agencies that invoice in stablecoins; the SDK and MCP are the path into agent workflows.
+
+The founder memo on the payment flow, business model, risks, and mainnet readiness is in [docs/product/BUSINESS.md](docs/product/BUSINESS.md).
 
 The full v2 plan, including the Control Room (public stats and an internal operations console), account deletion, pause and suspension, the indexer, the fee, and the mainnet path, is in [docs/product/V2_PLAN.md](docs/product/V2_PLAN.md).
 
