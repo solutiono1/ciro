@@ -1363,7 +1363,7 @@ export async function payPage(id) {
             <div id="action"></div>
           </form>
           <p class="fineprint">A wrong name does not start a payment. A finished payment cannot be pulled back.</p>
-          <p class="fineprint">The name is a check, not a global identity. Compare the payee address before you sign.</p>
+          <p class="fineprint">The app keeps one current owner per folded name. Compare the payee address before you sign.</p>
         </div>
       </div>
     </main>
