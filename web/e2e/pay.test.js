@@ -139,7 +139,11 @@ test("a payer can pay the exact name and cannot pay a close one", async () => {
     await page.getByRole("link", { name: "Get started" }).click();
     await page.getByRole("button", { name: "Connect" }).click();
     await page.locator("#name").fill("Elena Rossi");
-    await page.waitForFunction(() => document.querySelector("#preview")?.textContent?.includes("elena rossi"));
+    await page.getByText("Available. No one has claimed this name on Ciro.").waitFor();
+    await page.waitForFunction(() => {
+      const button = document.querySelector('#register button[type="submit"]');
+      return Boolean(button && !button.disabled);
+    });
     await page.getByRole("button", { name: "Register" }).click();
     await page.getByRole("heading", { name: "Open invoices" }).waitFor();
     assert.equal(await page.locator(".who").innerText(), "Elena Rossi");

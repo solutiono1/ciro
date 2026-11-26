@@ -305,8 +305,9 @@ Key-material note: the repository has no real keys, `.env` files, or API keys. T
 ## Judge test script
 
 1. Open <https://ciro-a9s.pages.dev> and connect a wallet on Aevum.
-2. Register a name. The contract writes it; the app shows the folded name.
-3. Create an invoice for 1.0 tUSD8 with a reference and a due date.
+2. Register a name. The contract writes it; the app shows the folded name. A
+   claimed name shows **Name unavailable** plus available suggestions.
+3. Create an invoice for **0.2 tUSD8** with a reference and a due date.
 4. Copy the pay link. Open it in another wallet or a private window.
 5. Type a close name. There is no pay button; the contract would refuse.
 6. Type the exact name. The Pay button appears with the locked amount and fee.

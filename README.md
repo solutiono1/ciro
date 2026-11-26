@@ -20,11 +20,11 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 ## Demo
 
-[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops the backed app-flow cut, muted. A 23-second supplement covers the in-app faucet, copy buttons, receipt CSV/print, and disconnect: [ciro-v1-supplement.mp4](https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4).
+[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). It shows the taken-name refusal with suggestions, the 0.2 tUSD8 payment, the on-chain receipt, the developers page, the Control Room, and the name directory. The landing loops the backed app-flow cut, muted. A 23-second supplement covers the in-app faucet, copy buttons, receipt CSV/print, and disconnect: [ciro-v1-supplement.mp4](https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4).
 
 Try the open demo: [ciro-a9s.pages.dev/#/demo](https://ciro-a9s.pages.dev/#/demo). The link follows the newest open 0.2 tUSD8 demo invoice.
 
-The [Control Room](https://ciro-a9s.pages.dev/#/stats) shows paid volume, invoice conversion, registered names, faucet state, API latency, and live chain health. The [name directory](https://ciro-a9s.pages.dev/#/names) shows every registered name. Signed-in operators get the [operations console](https://ciro-a9s.pages.dev/#/ops) for diagnostics and safe fixes.
+The [Control Room](https://ciro-a9s.pages.dev/#/stats) shows paid volume, invoice conversion, registered names, faucet state, API latency, and live chain health. The [name directory](https://ciro-a9s.pages.dev/#/names) shows the current registered names; build-period test rows are hidden. Signed-in operators get the [operations console](https://ciro-a9s.pages.dev/#/ops) for diagnostics and safe fixes.
 
 The screenshots are from the live Aevum deployment (chain 44005). The transactions in the proof table are from it.
 

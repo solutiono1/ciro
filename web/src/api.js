@@ -24,16 +24,20 @@ async function requestOnce(method, path, body, timeout) {
 
 export async function api(method, path, body) {
   // The Aevum testnet RPC and explorer can be slow. A read gets one retry on a
-  // network error; a write never retries because it may already have landed.
+  // network error. Preparing an unsigned transaction is also safe to retry
+  // because it has no on-chain effect; the faucet and payment broadcasts do
+  // not retry. The faucet's own per-address history still prevents a double
+  // send if a response is lost.
   const timeout = path === "/v1/faucet" ? 60_000 : 20_000;
-  try {
-    return await requestOnce(method, path, body, timeout);
-  } catch (err) {
-    if (method === "GET" && err.code === "offline") {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      return requestOnce(method, path, body, timeout);
+  const safeToRetry = method === "GET" || path.startsWith("/v1/tx/") || path === "/v1/names/check";
+  const delays = [600, 1500];
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await requestOnce(method, path, body, timeout);
+    } catch (err) {
+      if (!safeToRetry || err.code !== "offline" || attempt >= delays.length) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
     }
-    throw err;
   }
 }
 

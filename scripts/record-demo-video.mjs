@@ -54,8 +54,9 @@ const transport = http(rpcUrl, { timeout: 30_000 });
 const publicClient = createPublicClient({ chain, transport });
 const tokenAbi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 
-const payerKey = (await readFile(path.join(root, ".deploy-key"), "utf8")).trim();
-if (!/^0x[0-9a-fA-F]{64}$/.test(payerKey)) throw new Error("no valid .deploy-key found");
+const payerKey = process.env.CIRO_DEMO_PAYER_KEY
+  || (await readFile(process.env.CIRO_DEMO_PAYER_KEY_FILE || path.join(root, ".deploy-key"), "utf8")).trim();
+if (!/^0x[0-9a-fA-F]{64}$/.test(payerKey)) throw new Error("no valid payer key found");
 
 async function demoPayeeKey() {
   if (process.env.CIRO_DEMO_PAYEE_KEY && /^0x[0-9a-fA-F]{64}$/.test(process.env.CIRO_DEMO_PAYEE_KEY.trim())) {
@@ -82,7 +83,7 @@ const payeeWallet = createWalletClient({ account: payee, chain, transport });
 
 async function ensureFunds() {
   const payerGas = await publicClient.getBalance({ address: payer.address });
-  if (payerGas < parseEther("0.02")) {
+  if (payerGas < parseEther("0.005")) {
     throw new Error(`payer needs gas: ${formatEther(payerGas)} tQDAY`);
   }
   const payerToken = await publicClient.readContract({
@@ -249,8 +250,52 @@ async function fill(locator, value) {
   await sleep(280);
 }
 
+// A route render can finish after a click, replacing an input and dropping the
+// value. Fill, verify, and retry against the current element.
+async function fillStable(locator, value, attempts = 5) {
+  await locator.waitFor();
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    await locator.fill(value);
+    await sleep(250);
+    if ((await locator.inputValue().catch(() => null)) === value) return;
+  }
+  throw new Error(`field did not keep ${JSON.stringify(value)}`);
+}
+
+async function fillAllStable(fields, attempts = 6) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    for (const [locator, value] of fields) await locator.fill(value);
+    await sleep(400);
+    let kept = true;
+    for (const [locator, value] of fields) {
+      if ((await locator.inputValue().catch(() => null)) !== value) {
+        kept = false;
+        break;
+      }
+    }
+    if (kept) return;
+  }
+  throw new Error("the create form did not keep its values");
+}
+
+// The testnet edge can drop a navigation while DNS or the network changes.
+// Retry a full page load; the app is stateless between loads.
+async function goto(url) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 });
+      return;
+    } catch (err) {
+      lastError = err;
+      await sleep(2000);
+    }
+  }
+  throw lastError;
+}
+
 try {
-  await page.goto(origin, { waitUntil: "domcontentloaded" });
+  await goto(origin);
   await page.getByRole("heading", { name: "An invoice that will not pay the wrong name." }).waitFor();
   await sleep(1200);
 
@@ -261,6 +306,10 @@ try {
   await click(page.getByRole("link", { name: "Get started" }));
   await page.getByRole("button", { name: "Connect" }).waitFor();
   await click(page.getByRole("button", { name: "Connect" }));
+  // The demo payee is already registered, so the app redirects to the
+  // dashboard. Wait for it before opening the profile; clicking during the
+  // redirect can be lost under the next render.
+  await page.getByRole("heading", { name: "Open invoices" }).waitFor();
   await page.locator('.side a[href="#/profile"]').waitFor();
   await click(page.locator('.side a[href="#/profile"]'));
   await page.locator("#name").waitFor();
@@ -270,7 +319,7 @@ try {
   await fill(page.locator("#name"), "solution kanu");
   await page.getByText("Name unavailable").waitFor();
   await sleep(2400);
-  await fill(page.locator("#name"), NAME);
+  await fillStable(page.locator("#name"), NAME);
   await page.getByText("You own this name").waitFor();
   await page.waitForFunction(() => {
     const button = document.querySelector('#rename button[type="submit"]');
@@ -278,15 +327,19 @@ try {
   });
   await click(page.getByRole("button", { name: "Change name" }));
   await sleep(4500);
+  await page.locator("#name").waitFor();
   await holdTo(20);
 
   begin("create");
   await page.locator('.side a[href="#/invoices/new"]').waitFor();
   await click(page.locator('.side a[href="#/invoices/new"]'));
   await page.locator("#amount").waitFor();
-  await fill(page.locator("#amount"), AMOUNT);
-  await fill(page.locator("#reference"), REFERENCE);
-  await fill(page.locator("#due"), DUE);
+  await click(page.locator("#amount"));
+  await fillAllStable([
+    [page.locator("#amount"), AMOUNT],
+    [page.locator("#reference"), REFERENCE],
+    [page.locator("#due"), DUE],
+  ]);
   await click(page.getByRole("button", { name: "Create invoice" }));
   await page.getByRole("link", { name: "Open pay screen" }).waitFor();
   process.stdout.write(`invoice ${page.url()}\n`);
@@ -303,7 +356,7 @@ try {
   await holdTo(26);
 
   begin("pay");
-  await fill(page.locator("#claimed"), NAME);
+  await fillStable(page.locator("#claimed"), NAME);
   await page.getByText("The name matches.").waitFor();
   const pay = page.getByRole("button", { name: /^Pay / });
   await pay.waitFor();
@@ -327,15 +380,15 @@ try {
       params: [{ eth_accounts: {} }],
     });
   });
-  await page.goto(`${origin}/#/developers`, { waitUntil: "domcontentloaded" });
+  await goto(`${origin}/#/developers`);
   await page.getByRole("heading", { name: "Build on Ciro" }).waitFor();
   await page.getByText("@getciro/sdk").first().scrollIntoViewIfNeeded();
   await sleep(2200);
-  await page.goto(`${origin}/#/stats`, { waitUntil: "domcontentloaded" });
+  await goto(`${origin}/#/stats`);
   await page.getByRole("heading", { name: "The state of Ciro." }).waitFor();
-  await page.getByText("Live health").scrollIntoViewIfNeeded();
+  await page.getByRole("heading", { name: "Live health" }).scrollIntoViewIfNeeded();
   await sleep(2600);
-  await page.goto(`${origin}/#/names`, { waitUntil: "domcontentloaded" });
+  await goto(`${origin}/#/names`);
   await page.getByRole("heading", { name: "Names registered on Ciro." }).waitFor();
   await sleep(2200);
   await holdTo(28);

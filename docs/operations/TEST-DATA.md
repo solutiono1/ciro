@@ -15,24 +15,28 @@ contract.
 | 6 | `0xDaCf93b7F0c9fA3AF61CD27C1Fe382F29ba4b724` | 1.0 tUSD8 | Studio deposit | 2026-12-31 23:59:59 | Legacy demo payment, no longer linked |
 | 9 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 1.0 tUSD8 | Studio deposit | 2026-12-31 23:59:59 | Legacy demo payment, no longer linked |
 | 10 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 1.0 tUSD8 | Demo invoice | 2027-12-31 23:59:59 | Old 1.0 demo, superseded by invoice 11 |
-| 11 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 0.2 tUSD8 | Demo invoice | 2027-12-31 23:59:59 | Public demo, served by `#/demo` |
-| 12 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 0.2 tUSD8 | Demo invoice | 2028-12-31 23:59:59 | Rotation reserve for `#/demo` |
+| 11 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 0.2 tUSD8 | Demo invoice | 2027-12-31 23:59:59 | Older 0.2 demo, fallback |
+| 12 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 0.2 tUSD8 | Demo invoice | 2028-12-31 23:59:59 | Older 0.2 rotation reserve |
+| 13 | `0xF69e6400b9c93B36d0730B3643f82fE54810498C` | 0.2 tUSD8 | Demo invoice | 2028-12-31 23:59:59 | Current public demo, served by `#/demo` |
 
 `#/demo` picks the newest open 0.2 tUSD8 invoice with reference `Demo invoice`
-and the demo payee above. It therefore serves invoice 12 while both 11 and 12
-are open, and moves to 11 if 12 is paid or expires. Neither invoice needs a code
-change to rotate.
+and the demo payee above. It therefore serves invoice 13 while 11, 12, and 13
+are open, and falls back to 12 or 11 if 13 is paid or expires. No code change is
+needed to rotate.
 
 Do not pay invoices 6, 9, or 10. They are kept only because v1 cannot cancel
 them. They are not linked from the site, README, or submission copy.
 
 ## Legacy paid invoices
 
-Invoices 1 through 7, and 8, are paid test receipts. The earliest ones were
+Invoices 1 through 8, 15, and 16 are paid test receipts. The earliest ones were
 created by throwaway test wallets that registered a display name from before the
 demo settled on **Elena Rossi**. Those names are on chain and cannot be edited.
 They are not part of the demo and are not linked anywhere public. Invoice 8 is
-the paid receipt used for screenshots and receipt checks.
+the paid receipt used for screenshots and receipt checks. Invoice 15 was the
+first 0.2 tUSD8 run through the updated flow; invoice 16 is the paid receipt in
+the current narrated demo. The recording payer for invoice 16 is the local
+testnet key in `.ciro-record/demo-payer-key`, which is gitignored.
 
 ## Public directory
 
@@ -80,6 +84,8 @@ Migration steps:
 ## Housekeeping
 
 - The demo payee key is a local, gitignored testnet key (`.demo-payee-key*`).
+- The demo recording payer key is a local, gitignored testnet key
+  (`.ciro-record/demo-payer-key`).
 - The faucet treasury key is a Cloudflare secret; see
   [FAUCET.md](FAUCET.md).
 - Never send mainnet assets to any address on this page.

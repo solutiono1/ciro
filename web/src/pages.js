@@ -1021,6 +1021,10 @@ function wireNameInput(input, submit) {
   };
 
   input.addEventListener("input", () => {
+    // Invalidate any check already in flight before the debounce starts. Without
+    // this, an older response can briefly render "You own this name" for a new,
+    // taken name while the user is still typing.
+    sequence += 1;
     clearTimeout(timer);
     const folded = foldedText(input.value);
     if (/[^\x20-\x7E]/.test(input.value)) {
@@ -1372,7 +1376,17 @@ export function bindPay(id) {
   let timer = 0;
   const run = () => refreshPay(id, input.value);
   input.addEventListener("input", () => {
+    // Drop the previous close/exact decision immediately. An in-flight check
+    // must not render a stale "close" warning over the exact name.
+    payTicket += 1;
     clearTimeout(timer);
+    const match = document.querySelector("#match");
+    const action = document.querySelector("#action");
+    if (match) {
+      match.className = "muted";
+      match.textContent = input.value.trim() ? "Checking the name…" : "Type the name you were told.";
+    }
+    if (action) action.innerHTML = "";
     timer = setTimeout(run, 250);
   });
 }

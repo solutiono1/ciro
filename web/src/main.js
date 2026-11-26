@@ -99,29 +99,27 @@ async function go() {
     if (session.account) await loadPayee();
     if (mine !== ticket) return;
     if (path === "/docs") {
-      await ensureMeta().catch(() => {});
-      if (mine !== ticket) return;
+      // The docs page has a "start the API" state, so a slow API must not block
+      // the public page from rendering.
+      ensureMeta().catch(() => {});
       draw(docsPage());
       bindDocs();
       return;
     }
     if (path === "/stats") {
-      await ensureMeta().catch(() => {});
-      if (mine !== ticket) return;
+      ensureMeta().catch(() => {});
       draw(await statsPage());
       bindStats(go);
       return;
     }
     if (path === "/names") {
-      await ensureMeta().catch(() => {});
-      if (mine !== ticket) return;
+      ensureMeta().catch(() => {});
       draw(await namesPage());
       bindNames();
       return;
     }
     if (path === "/developers") {
-      await ensureMeta().catch(() => {});
-      if (mine !== ticket) return;
+      ensureMeta().catch(() => {});
       draw(developersPage(apiUrl(), rpcUrl()));
       bindDevelopers(go);
       return;
@@ -227,4 +225,5 @@ window.addEventListener("hashchange", () => {
   go();
 });
 
-ensureMeta().catch(() => {}).finally(go);
+ensureMeta().catch(() => {});
+go();

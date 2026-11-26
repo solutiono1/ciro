@@ -27,12 +27,15 @@ the real clip lengths win; the edit trims the video holds to the audio.
 node scripts/record-demo-video.mjs
 ```
 
-This records the live site at `https://ciro-a9s.pages.dev`, not a mockup:
+This records the production build, not a mockup. By default it uses the live
+site at `https://ciro-a9s.pages.dev`; set `CIRO_DEMO_URL` to a local production
+build when the edge is slow. The API and chain stay live either way:
 
 - 1440x810, 30 fps, no audio.
 - The demo payee in `.demo-payee-key*` is already registered as **Elena Rossi**.
-- The deployer in `.deploy-key` is the payer. It needs at least **0.2 tUSD8**
-  (one faucet claim) and gas for the payment.
+- The payer is the deployer in `.deploy-key`, or the key named by
+  `CIRO_DEMO_PAYER_KEY_FILE` / `CIRO_DEMO_PAYER_KEY`. It needs at least
+  **0.2 tUSD8** (one faucet claim) and gas for the payment.
 - The payee shows the taken-name refusal with suggestions, re-registers
   **Elena Rossi**, creates a **0.2 tUSD8** invoice, switches to the payer, types
   the close name **Elena Rossa** and shows no pay button, then types the exact
