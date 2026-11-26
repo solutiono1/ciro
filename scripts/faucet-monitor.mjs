@@ -44,10 +44,15 @@ async function endpointHealth() {
       signal: AbortSignal.timeout(20_000),
     });
     const body = await response.json().catch(() => ({}));
+    const state = body.status ?? body.error ?? "unknown";
+    // A 429 with a faucet error still proves the endpoint and its limits are
+    // alive. The balance check below is what decides whether funds are low.
+    const reachable = response.ok
+      || (response.status === 429 && (state === "faucet_rate_limited" || state === "faucet_already_claimed"));
     return {
-      ok: response.ok && !body.error,
+      ok: reachable,
       status: response.status,
-      state: body.status ?? body.error ?? "unknown",
+      state,
     };
   } catch (error) {
     return { ok: false, status: 0, state: error.name === "TimeoutError" ? "timeout" : "unreachable" };
