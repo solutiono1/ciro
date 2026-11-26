@@ -37,7 +37,7 @@ const NAV = [
   ["/history", "History", "history"],
   ["/wallet", "Wallet", "wallet"],
   ["/profile", "Profile", "profile"],
-  ["/ops", "Control Room", "chart"],
+  // ["/ops", "Control Room", "chart"], // Disconnected on 2026-11-26 for project retake
   ["/settings", "Settings", "settings"],
   ["/developers", "Developers", "developers"],
 ];
@@ -104,8 +104,8 @@ function publicBar(withApp, minimal = false) {
     : `<nav class="pub-nav" aria-label="Site">
         <a href="#how">How it works</a>
         <a href="#faq">FAQ</a>
-        <a href="#/names">Names</a>
-        <a href="#/stats">Stats</a>
+        // <a href="#/names">Names</a>
+//        <a href="#/stats">Stats</a> // Disconnected on 2026-11-26 for project retake
         <a href="#/docs">Docs</a>
       </nav>`;
   return `<header class="pub-bar">
@@ -191,9 +191,9 @@ function sheet() {
       <a href="#/wallet">${icon("wallet")}Wallet</a>
       <a href="#/profile">${icon("profile")}Profile</a>
       <a href="#/settings">${icon("settings")}Settings</a>
-      <a href="#/ops">${icon("chart")}Control Room</a>
-      <a href="#/stats">${icon("chart")}Public stats</a>
-      <a href="#/names">${icon("profile")}Names</a>
+      // <a href="#/ops">${icon("chart")}Control Room</a> // Disconnected on 2026-11-26 for project retake
+      // <a href="#/stats">${icon("chart")}Public stats</a> // Disconnected on 2026-11-26 for project retake
+//        <a href="#/names">${icon("profile")}Names</a> // Disconnected on 2026-11-26 for project retake
       <a href="#/developers">${icon("developers")}Developers</a>
       <button type="button" id="sheet-faucet">${icon("droplet")}<span>Get test tUSD8</span></button>
       <button class="close" type="button" data-close-sheet>${icon("close")}Close</button>

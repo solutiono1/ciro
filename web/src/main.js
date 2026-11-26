@@ -174,13 +174,26 @@ async function go() {
       bindCopy();
       return;
     }
-    if (path === "/ops") {
+    // /ops, /stats, /names disconnected - to be re-fixed on project retake
+    if (false && path === "/ops") {
       if (!session.account) {
         location.hash = "#/start";
         return;
       }
       draw(await opsPage());
       bindOps(go);
+      return;
+    }
+    if (false && path === "/stats") {
+      await ensureMeta().catch(() => {});
+      draw(await statsPage());
+      bindStats(go);
+      return;
+    }
+    if (false && path === "/names") {
+      await ensureMeta().catch(() => {});
+      draw(await namesPage());
+      bindNames();
       return;
     }
     if (path === "/invoices/new") {
