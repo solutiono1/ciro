@@ -211,13 +211,29 @@ npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CH
 
 ## Testnet faucet
 
-Ciro runs a small Aevum testnet faucet, separate from the invoice API. It sends a fixed **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury, with a 24-hour per-address claim history and a 2-minute global throttle, without leaving the app. If the treasury is empty, the official QDay faucet is the fallback.
+Ciro includes a testnet-only faucet so a new user or judge can try the full flow without leaving the app or holding mainnet ETH. It sends **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury. One claim per address per 24 hours, with a 2-minute global throttle. The claim history is read from the explorer, so the limit survives restarts.
 
-Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Send test tUSD8 or tQDAY there to refill it.
+<div align="center">
+
+<img src="docs/screens/faucet-entry.png" width="860" alt="Ciro Docs network section with Add Aevum to wallet and Get test tUSD8 buttons" />
+
+<sub>Docs: add Aevum, then request test funds without a redirect.</sub>
+
+<br /><br />
+
+<img src="docs/screens/faucet-sent.png" width="860" alt="Ciro faucet confirmation showing 0.2 tUSD8 and 0.01 tQDAY sent with explorer links" />
+
+<sub>The confirmation names the amount and links both testnet transactions.</sub>
+
+</div>
+
+**What it does not do.** It is not a bridge, a mint, or a general token source. It takes no fee, needs no API key, and cannot move user funds. It only runs on Aevum testnet; otherwise the app points to the official QDay faucet. The invoice API remains keyless.
+
+Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Refill it only with testnet tUSD8 or tQDAY.
+
+The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). Never commit it. It can only send the fixed testnet claim and cannot sign invoices or touch user funds.
 
 Ops runbook: [docs/operations/FAUCET.md](docs/operations/FAUCET.md).
-
-The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts. It cannot sign invoices, move user funds, or run on mainnet. The invoice API remains keyless.
 
 ## Configuration
 
