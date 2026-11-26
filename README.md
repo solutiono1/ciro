@@ -22,7 +22,7 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 [Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops the backed app-flow cut, muted.
 
-Try the open demo invoice: [invoice 10](https://ciro-a9s.pages.dev/#/pay/10).
+Try the open demo invoice: [invoice 11](https://ciro-a9s.pages.dev/#/pay/11).
 
 The screenshots are from the live Aevum deployment (chain 44005). The transactions in the proof table are from it.
 
@@ -211,9 +211,11 @@ npm start -w @getciro/api         # API; set CIRO_RPC_URL, CIRO_ADDRESS, CIRO_CH
 
 ## Testnet faucet
 
-Ciro runs a small Aevum testnet faucet, separate from the invoice API. It sends a fixed **1.0 tUSD8 + 0.01 tQDAY** from a dedicated treasury, with a 10-minute cooldown per address, without leaving the app. If the treasury is empty, the official QDay faucet is the fallback.
+Ciro runs a small Aevum testnet faucet, separate from the invoice API. It sends a fixed **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury, with a 24-hour per-address claim history and a 2-minute global throttle, without leaving the app. If the treasury is empty, the official QDay faucet is the fallback.
 
 Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Send test tUSD8 or tQDAY there to refill it.
+
+Ops runbook: [docs/operations/FAUCET.md](docs/operations/FAUCET.md).
 
 The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts. It cannot sign invoices, move user funds, or run on mainnet. The invoice API remains keyless.
 
@@ -235,7 +237,7 @@ The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixe
 | Contracts | `CIRO_FEE_BPS` | Fee in basis points, `0` to `100`. This deployment uses `0`. |
 | CLI | `CIRO_CONFIG` | Config path. Defaults to `~/.ciro/config.json`. |
 | Faucet | `CIRO_FAUCET_KEY` | Dedicated testnet treasury key for `/v1/faucet`. Cloudflare secret; never commit it. |
-| Faucet | `CIRO_FAUCET_TOKEN_AMOUNT` | Optional tUSD8 base units per claim. Defaults to `1000000` (1.0), capped at 1.0. |
+| Faucet | `CIRO_FAUCET_TOKEN_AMOUNT` | Optional tUSD8 base units per claim. Defaults to `200000` (0.2), capped at 1.0. |
 | Faucet | `CIRO_FAUCET_GAS_AMOUNT` | Optional tQDAY wei per claim. Defaults to `0.01`. |
 
 ## Tests

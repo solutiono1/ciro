@@ -1,6 +1,7 @@
 import { createServer as createHttpServer } from "node:http";
 import { createState, handleRequest, parseBody } from "./app.js";
 import { ApiError } from "./errors.js";
+import { handleFaucet } from "./faucet.js";
 
 // The local Node server and the API tests use this file. The Cloudflare Pages
 // Function imports app.js directly and never touches node:http.
@@ -30,6 +31,11 @@ async function route(req, res, state) {
   }
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   const body = req.method === "POST" ? await readJson(req) : {};
+  if (req.method === "POST" && url.pathname === "/v1/faucet") {
+    const result = await handleFaucet(process.env, body);
+    send(res, result.status, result.body);
+    return;
+  }
   const result = await handleRequest(state, req.method, url.pathname, body);
   send(res, result.status, result.body);
 }

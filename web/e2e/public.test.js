@@ -48,8 +48,27 @@ test("the public pages hold together at both sizes", async () => {
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Docs" }).click();
     await page.getByRole("heading", { name: "Build on Ciro" }).waitFor();
     assert.equal(await page.getByRole("button", { name: /Add Aevum to wallet/ }).count(), 1);
-    assert.equal(await page.getByRole("button", { name: /Get 1,000 tUSD8/ }).count(), 1);
+    assert.equal(await page.getByRole("button", { name: /Get test tUSD8/ }).count(), 1);
     assert.equal(await overflows(page), false);
+
+    // Docs and Developers code blocks have working copy buttons.
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin });
+    await page.waitForFunction(() => document.querySelectorAll(".code-copy").length >= 5);
+    assert.equal(await page.locator(".code-copy").count(), 5);
+    const docsCopy = page.locator(".code-copy").first();
+    await docsCopy.click();
+    await page.waitForFunction(() => document.querySelector(".code-copy")?.textContent === "Copied");
+    assert.equal(await docsCopy.innerText(), "Copied");
+    assert.match(await page.evaluate(() => navigator.clipboard.readText()), /curl/);
+
+    await page.goto(`${origin}/#/developers`);
+    await page.locator("#endpoints").waitFor();
+    await page.waitForFunction(() => document.querySelectorAll(".code-copy").length >= 5);
+    const devCopy = page.locator(".code-copy").first();
+    await devCopy.click();
+    await page.waitForFunction(() => document.querySelector(".code-copy")?.textContent === "Copied");
+    assert.equal(await devCopy.innerText(), "Copied");
+    assert.match(await page.evaluate(() => navigator.clipboard.readText()), /^https?:\/\//);
 
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await overflows(page), false);

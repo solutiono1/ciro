@@ -127,7 +127,7 @@ Then three steps, each with a line icon from the app's own set: register a name,
 
 The landing may use photos and 3D icons because it is public marketing. The app screens stay flat: no photos, no illustration, no gradient. No feature grid for cards, yield, or payroll.
 
-**Docs.** Public at `#/docs`. One page with a sticky section index: overview, API, CLI, MCP, contract, network. The API table lists every route. The contract and token addresses link to the explorer when `/v1/meta` answers. Two actions: add Aevum to the wallet, and get 1,000 tUSD8 from the test faucet. The docs link to the app and to `/v1/meta`, and the page never asks for a key.
+**Docs.** Public at `#/docs`. One page with a sticky section index: overview, API, CLI, MCP, contract, network. The API table lists every route. The contract and token addresses link to the explorer when `/v1/meta` answers. Two actions: add Aevum to the wallet, and request 0.2 tUSD8 plus gas from the Ciro testnet faucet. The docs link to the app and to `/v1/meta`, and the page never asks for a key.
 
 **Onboarding.** The diagram above. The normalized name is shown before the signature, so extra spaces and capitals are obviously the same name.
 
@@ -135,7 +135,7 @@ The landing may use photos and 3D icons because it is public marketing. The app 
 
 **Invoices.** List of open, late, and paid. Create: amount, reference, due. Network is shown and fixed to Aevum in v1. Detail: status, link, copy. Late invoices stay in the list as closed, not as a pay button.
 
-**Pay.** The screen in the table above. Amount, fee line, network, and due time are read-only. The name field is the only input. Exact shows Pay. Close and none do not. If the wallet is on another chain, the app switches or adds the Ciro chain before the signature, so the wallet never quotes mainnet gas for a testnet invoice. If the wallet lacks tUSD8, the same screen offers the test faucet and mints 1,000 tUSD8 without leaving Ciro.
+**Pay.** The screen in the table above. Amount, fee line, network, and due time are read-only. The name field is the only input. Exact shows Pay. Close and none do not. If the wallet is on another chain, the app switches or adds the Ciro chain before the signature, so the wallet never quotes mainnet gas for a testnet invoice. If the wallet lacks tUSD8, the same screen offers the Ciro testnet faucet (0.2 tUSD8 plus gas) without leaving Ciro. On a local test chain it mints 1,000 tUSD8.
 
 **Receipt.** Amount, payee name, payer address, reference, time, explorer link. This is the screenshot an accountant gets. From history it is the same screen.
 

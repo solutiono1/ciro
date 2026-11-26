@@ -9,14 +9,41 @@ const TOKEN_ABI = parseAbi([
   "function balanceOf(address) view returns (uint256)",
   "function transfer(address,uint256) returns (bool)",
 ]);
-const DEFAULT_AMOUNT = 1_000_000n; // 1.0 tUSD8 for the testnet flow
+const DEFAULT_AMOUNT = 200_000n; // 0.2 tUSD8 per claim
 const DEFAULT_GAS = parseEther("0.01");
 const MAX_AMOUNT = 1_000_000n;
-const COOLDOWN_MS = 10 * 60 * 1000;
+const COOLDOWN_MS = 2 * 60 * 1000; // in-memory fallback
+const ADDRESS_COOLDOWN_SECONDS = 24 * 60 * 60;
+const GLOBAL_COOLDOWN_SECONDS = 2 * 60;
 const claims = new Map();
 
 function result(status, body) {
   return { status, body };
+}
+
+async function faucetHistory(env, treasury, token, to) {
+  const base = (env.CIRO_FAUCET_EXPLORER_URL || env.CIRO_EXPLORER_URL || "").replace(/\/$/, "");
+  if (!base) return null;
+  try {
+    const url = `${base}/api?module=account&action=tokentx&address=${treasury}&contractaddress=${token}&page=1&offset=100&sort=desc`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return null;
+    const json = await response.json();
+    if (!Array.isArray(json.result)) return null;
+    const from = treasury.toLowerCase();
+    const target = to.toLowerCase();
+    let latest = 0;
+    let recipient = 0;
+    for (const tx of json.result) {
+      if (String(tx.from).toLowerCase() !== from) continue;
+      const ts = Number(tx.timeStamp) || 0;
+      if (ts > latest) latest = ts;
+      if (String(tx.to).toLowerCase() === target && ts > recipient) recipient = ts;
+    }
+    return { latest, recipient };
+  } catch {
+    return null;
+  }
 }
 
 function amountFromEnv(env) {
@@ -51,6 +78,20 @@ export async function handleFaucet(env, body) {
   }
 
   const account = privateKeyToAccount(env.CIRO_FAUCET_KEY);
+  const history = await faucetHistory(env, account.address, token, to);
+  const now = Math.floor(Date.now() / 1000);
+  if (history?.recipient && now - history.recipient < ADDRESS_COOLDOWN_SECONDS) {
+    return result(429, {
+      error: "faucet_already_claimed",
+      retryAfter: ADDRESS_COOLDOWN_SECONDS - (now - history.recipient),
+    });
+  }
+  if (history?.latest && now - history.latest < GLOBAL_COOLDOWN_SECONDS) {
+    return result(429, {
+      error: "faucet_rate_limited",
+      retryAfter: GLOBAL_COOLDOWN_SECONDS - (now - history.latest),
+    });
+  }
   const chain = defineChain({
     id: chainId,
     name: "Aevum",

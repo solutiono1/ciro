@@ -7,6 +7,7 @@ export async function api(method, path, body) {
       method,
       headers: body ? { "content-type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(8000),
     });
   } catch {
     throw Object.assign(new Error("The Ciro API is not reachable."), { code: "offline" });
@@ -42,6 +43,7 @@ export function sentence(code) {
     faucet_empty: "The Ciro testnet faucet is empty right now. Use the official QDay faucet as a fallback.",
     faucet_offline: "The Ciro testnet faucet is offline. Use the official QDay faucet as a fallback.",
     faucet_failed: "The Ciro testnet faucet could not send funds. Try again.",
+    faucet_already_claimed: "This wallet already claimed from the Ciro faucet in the last 24 hours. Use the official QDay faucet if you need more.",
     use_official_faucet: "tUSD8 comes from the QDay faucet, not this app.",
     not_found: "That is not available on this network.",
   };

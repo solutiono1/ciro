@@ -17,6 +17,7 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 ## Operations
 
 - [Changelog](operations/CHANGELOG.md) — notable changes.
+- [Faucet runbook](operations/FAUCET.md) — treasury, limits, refill, and rotation.
 
 ## Growth
 

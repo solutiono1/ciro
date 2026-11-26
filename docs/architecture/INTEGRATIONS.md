@@ -45,7 +45,7 @@ Response: `{ "chainId": 44005, "to": "0x…", "data": "0x…", "value": "0", "su
 
 Testnet faucet:
 
-- `POST /v1/faucet` `{ "address": "0x…" }` sends a fixed **1.0 tUSD8 + 0.01 tQDAY** from a dedicated testnet treasury, with a 10-minute cooldown per address. It returns `{ status: "sent", tokenTx, gasTx, tokenAmount, gasAmount }` or `{ status: "already_funded" }`.
+- `POST /v1/faucet` `{ "address": "0x…" }` sends a fixed **0.2 tUSD8 + 0.01 tQDAY** from a dedicated testnet treasury, with a 24-hour per-address claim history and a 2-minute global throttle. It returns `{ status: "sent", tokenTx, gasTx, tokenAmount, gasAmount }` or `{ status: "already_funded" }`. The claim history is read from the explorer's token transfers, so the per-address limit survives isolate restarts.
 - It is separate from the invoice API and uses a dedicated testnet-only key in a Cloudflare secret. It cannot sign invoices or touch user funds.
 - On a local test chain the app uses `POST /v1/tx/faucet` (the fixture mint) instead.
 - Treasury: `0x09257929772176E9c832fC8056A0d9913Ef77a13`. Send test tUSD8 or tQDAY there to refill.

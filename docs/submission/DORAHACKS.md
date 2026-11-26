@@ -25,7 +25,7 @@ key that can move funds.
 | API | <https://ciro-a9s.pages.dev/api/v1/meta> |
 | Contract | [`0x4AceB37ecAce160B4363111460020c2d088C529C`](https://explorer-test.qday.info/address/0x4AceB37ecAce160B4363111460020c2d088C529C?tab=contract) |
 | Demo video | <https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4> |
-| Open demo invoice | <https://ciro-a9s.pages.dev/#/pay/10> |
+| Open demo invoice | <https://ciro-a9s.pages.dev/#/pay/11> |
 | MCP agent example | [examples/mcp-agent.mjs](../../examples/mcp-agent.mjs) |
 | Source | <https://github.com/solutiono1/ciro> |
 | Audit | [docs/security/REVIEW.md](../security/REVIEW.md) |
@@ -173,7 +173,7 @@ dependency of the core flow.
 
 ## Testnet faucet
 
-The app has a small Ciro faucet, separate from the invoice API. It sends **1.0 tUSD8 + 0.01 tQDAY** from a dedicated treasury (`0x09257929772176E9c832fC8056A0d9913Ef77a13`), with a 10-minute cooldown per address. The user stays on Ciro; there is no redirect and no mainnet-balance check. If the treasury is empty, the official QDay faucet is the fallback.
+The app has a small Ciro faucet, separate from the invoice API. It sends **0.2 tUSD8 + 0.01 tQDAY** from a dedicated treasury (`0x09257929772176E9c832fC8056A0d9913Ef77a13`), with a 24-hour per-address claim history and a 2-minute global throttle. The user stays on Ciro; there is no redirect and no mainnet-balance check. If the treasury is empty, the official QDay faucet is the fallback.
 
 The faucet key is a Cloudflare secret (`CIRO_FAUCET_KEY`). It can only send fixed testnet amounts to an address. It cannot sign invoices, move user funds, or run on mainnet. The key is not in the repository or its history.
 

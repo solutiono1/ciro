@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-26 — In-app faucet, copy buttons, and safer sessions
+
+- Added a separate `/v1/faucet` endpoint and in-app buttons: **0.2 tUSD8 + 0.01 tQDAY** from a dedicated testnet treasury, with a 24-hour per-address claim history and a two-minute global throttle. No redirect and no mainnet-ETH check. The invoice API remains keyless; the faucet has a dated audit addendum.
+- Added the same faucet route to the Node server, so the local API and Pages agree.
+- Added receipt CSV download and print from the receipt page.
+- Added copy buttons to every Docs and Developers code block for the API, CLI, MCP, and SDK.
+- An explicit wallet disconnect now persists across navigation and reloads; navigation cannot reattach the old account. Wallet-side empty-account events are treated as a disconnect.
+- Replaced the landing clip with the supplied backed export, used byte-for-byte.
+- Rotated the public demo invoice to 0.2 tUSD8 so it matches the faucet amount.
+- Added the faucet runbook and the v1 growth backlog.
+
 ## 2026-11-23 - Deployment, landing, and public docs
 
 - Deployed Ciro to QDay Aevum testnet (chain 44005) at `0x4AceB37ecAce160B4363111460020c2d088C529C`, settling in tUSD8 with a zero fee. The README links the deploy, an exact pay, and a refused name on the explorer.
