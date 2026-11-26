@@ -64,3 +64,16 @@ point `LD_LIBRARY_PATH` at an extracted copy of the NSS/NSPR libraries.
 
 The final file stays local for the DoraHacks upload unless it is small enough to
 host beside the landing media.
+
+
+## v1 feature supplement
+
+`demo/ciro-v1-supplement-final.mp4` is a 23-second silent clip with captions. It
+shows the in-app faucet (`0.2 tUSD8 + gas`), Docs copy buttons, receipt CSV, and
+the disconnect that survives a reload. The hosted copy is
+`web/public/media/ciro-v1-supplement.mp4`, served at
+<https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4>.
+
+The recorder lives in `.ciro-record/` and is not committed. It uses a fresh
+testnet key, claims once, and the key is swept back to the treasury after the
+recording.

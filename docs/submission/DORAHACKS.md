@@ -25,6 +25,7 @@ key that can move funds.
 | API | <https://ciro-a9s.pages.dev/api/v1/meta> |
 | Contract | [`0x4AceB37ecAce160B4363111460020c2d088C529C`](https://explorer-test.qday.info/address/0x4AceB37ecAce160B4363111460020c2d088C529C?tab=contract) |
 | Demo video | <https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4> |
+| Feature supplement (23s) | <https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4> |
 | Open demo | <https://ciro-a9s.pages.dev/#/demo> |
 | MCP agent example | [examples/mcp-agent.mjs](../../examples/mcp-agent.mjs) |
 | Source | <https://github.com/solutiono1/ciro> |
@@ -226,6 +227,10 @@ register a name, create an invoice, and open the pay link in a second wallet.
 narrated. It shows the landing page, registration, invoice creation, the
 close-name refusal, the exact-name payment, the verified receipt with a real
 transaction hash, and the API/CLI/MCP/SDK documentation.
+
+A 23-second supplement shows the post-demo v1 additions: the in-app faucet,
+Docs copy buttons, receipt CSV/print, and the disconnect that survives a reload —
+<https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4>.
 
 ## Team
 

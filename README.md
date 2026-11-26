@@ -20,7 +20,7 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 ## Demo
 
-[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops the backed app-flow cut, muted.
+[Watch the 1:51.6 narrated walkthrough](https://ciro-a9s.pages.dev/media/ciro-demo-final.mp4). The landing loops the backed app-flow cut, muted. A 23-second supplement covers the in-app faucet, copy buttons, receipt CSV/print, and disconnect: [ciro-v1-supplement.mp4](https://ciro-a9s.pages.dev/media/ciro-v1-supplement.mp4).
 
 Try the open demo: [ciro-a9s.pages.dev/#/demo](https://ciro-a9s.pages.dev/#/demo). The link follows the newest open 0.2 tUSD8 demo invoice.
 

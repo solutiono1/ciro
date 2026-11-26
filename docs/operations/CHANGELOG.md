@@ -12,6 +12,7 @@
 - Added `#/demo`, which resolves to the newest open 0.2 tUSD8 demo invoice instead of a fixed number. Invoice 12 is the rotation reserve.
 - Added `scripts/faucet-monitor.mjs` and a scheduled workflow that alerts when the treasury drops below three claims or 0.02 tQDAY, or the live endpoint is unhealthy.
 - Documented the open v1 invoices and the v2 cancellation migration in `docs/operations/TEST-DATA.md`.
+- Added a 23-second captioned supplement for the faucet, copy buttons, receipt export, and persistent disconnect: `/media/ciro-v1-supplement.mp4`.
 - Added the faucet runbook and the v1 growth backlog.
 
 ## 2026-11-23 - Deployment, landing, and public docs
