@@ -242,8 +242,10 @@ prototype. It is not a production payment company yet.
 1. **Why would a payer trust a link from a stranger?** The link must show the
    payee address, the registered name, the amount, and the network before a
    signature. Verified merchant badges and domain-bound links are the next step.
-2. **What if the payee name is common?** Names are a confirmation check, not a
-   global identity. The address is still shown; duplicate names are allowed.
+2. **What if the payee name is common?** The app keeps one current owner per
+   folded name and refuses a duplicate registration with suggestions. The v1
+   contract cannot enforce that on chain, so the payee address is always shown;
+   v2 moves the rule into the contract.
 3. **What if the payer sends the wrong token or network?** The client pins the
    chain, contract, token, invoice, name, and amount before the wallet signs.
 4. **What if the invoice is wrong?** v1 has no cancel; v2 adds payee-only

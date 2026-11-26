@@ -30,7 +30,7 @@ function asRecord(raw, keys) {
   return out;
 }
 
-async function read(state, functionName, args) {
+export async function read(state, functionName, args) {
   try {
     return await state.client.readContract({
       address: state.config.address,
@@ -135,11 +135,20 @@ function topicForAddress(address) {
 
 function normalizeExplorerLog(raw, event) {
   const decoded = decodeEventLog({ abi: [event], data: raw.data, topics: raw.topics });
+  let timestamp = null;
+  if (raw.timeStamp !== undefined && raw.timeStamp !== null) {
+    try {
+      timestamp = Number(BigInt(raw.timeStamp));
+    } catch {
+      timestamp = null;
+    }
+  }
   return {
     ...raw,
     args: decoded.args,
     blockNumber: BigInt(raw.blockNumber),
     transactionHash: raw.transactionHash,
+    timestamp,
   };
 }
 
@@ -191,6 +200,26 @@ function decodeExplorerLogs(raws, event) {
     }
   }
   return logs;
+}
+
+// Shared by the receipt scan, the name directory, and the stats page. The
+// explorer returns every matching log in one call and includes the block time.
+// The RPC fallback is chunked and fetches the missing block timestamps once.
+export async function eventLogs(state, topic, event) {
+  const fast = await explorerLogs(state, topic);
+  if (fast) return decodeExplorerLogs(fast, event);
+  const logs = await scanLogs(state, event);
+  const missing = [...new Set(logs.filter((log) => log.timestamp == null).map((log) => log.blockNumber))];
+  const times = new Map();
+  await Promise.all(missing.map(async (blockNumber) => {
+    try {
+      const block = await state.client.getBlock({ blockNumber });
+      times.set(blockNumber.toString(), Number(block.timestamp));
+    } catch {
+      // A missing block time only hides the age column.
+    }
+  }));
+  return logs.map((log) => ({ ...log, timestamp: log.timestamp ?? times.get(log.blockNumber.toString()) ?? null }));
 }
 
 export async function scanLogs(state, event, args) {

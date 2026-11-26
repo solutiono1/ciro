@@ -52,9 +52,14 @@ the cheap part. The missing record and the wrong-name risk are the product.
 ## The solution
 
 1. The payee registers a name against their address. Capitals and extra spaces
-   still match, because the contract folds the name before hashing it.
+   still match, because the contract folds the name before hashing it. The app
+   keeps one current owner per folded name: a claimed name is refused with
+   available suggestions. The v1 contract stores a name per address but cannot
+   enforce global uniqueness; v2 moves the rule on chain.
 2. The payee creates an invoice with an amount, reference, due time, and network.
-   The name, amount, due time, and network are locked on the invoice.
+   The name, amount, due time, and network are locked on the invoice. Only a
+   registered payee can create one, so every payment goes to a name registered
+   on Ciro.
 3. The payer opens the link and types the name they were told. The screen shows
    the registered name, the amount, the network, the fee, and the due time.
 4. The contract compares the typed name to the **invoice's name snapshot**.
@@ -70,10 +75,18 @@ the cheap part. The missing record and the wrong-name risk are the product.
   payment, capped and revocable allowances, zero fee. 20 Foundry tests pass,
   including reentrancy, close name, late payment, double payment, and allowance
   accounting.
-- **Web app:** landing, onboarding, register, create invoice, public pay link,
-  close-name refusal, exact-name pay, receipt, wallet, history, profile,
-  settings, developers/docs.
-- **HTTP API:** reads and unsigned transactions. The invoice API holds no key. A separate `/v1/faucet` endpoint sends fixed testnet tUSD8/tQDAY from a dedicated treasury.
+- **Web app:** landing, onboarding, register with live name availability and
+  suggestions, create invoice, public pay link, close-name refusal, exact-name
+  pay, receipt, wallet, history, profile, settings, developers/docs.
+- **Control Room:** public stats at `/#/stats` (paid volume, invoice conversion,
+  registered names, new users, repeat payees, fee, faucet, API latency, live
+  chain health), a public name directory at `/#/names`, and a signed-in
+  operations console at `/#/ops` with diagnostics, safe fixes, and a support
+  bundle.
+- **HTTP API:** reads and unsigned transactions, plus `/v1/names`,
+  `/v1/names/check`, `/v1/stats`, and `/v1/diagnostics`. The invoice API holds
+  no key and no invoice database. A separate `/v1/faucet` endpoint sends fixed
+  testnet tUSD8/tQDAY from a dedicated treasury.
 - **CLI:** `@getciro/cli@0.1.2`, signs locally with a key file the operator owns.
 - **MCP:** `@getciro/mcp@0.1.0`, four tools (`ciro_check`,
   `ciro_prepare_invoice`, `ciro_prepare_pay`, `ciro_receipt`). It prepares; it
@@ -169,8 +182,9 @@ dependency of the core flow.
   read from the chain.
 - **Audited:** the first review is in [REVIEW.md](../security/REVIEW.md). No
   Critical or High finding in the contract. Client-trust findings were fixed.
-- **Transparent limits:** ASCII-only folding, duplicate names allowed, no cancel
-  in v1, immutable contract, testnet only. These are in the README, not hidden.
+- **Transparent limits:** ASCII-only folding, one current owner per folded name
+  in the app (the v1 contract cannot enforce it on chain), no cancel in v1,
+  immutable contract, testnet only. These are in the README, not hidden.
 
 ## Testnet faucet
 
@@ -208,6 +222,45 @@ economics, risks, and honest mainnet-readiness gaps, is in
 - Node.js for the CLI and MCP; npm packages for the SDK, CLI, and MCP.
 - Playwright for the end-to-end flow; Foundry for contract tests.
 
+## How the API works
+
+The API is a **Cloudflare Pages Function** at `/api/*` over the same core the
+Node server uses. Reads call the Aevum RPC and return JSON; writes return an
+unsigned transaction for the wallet or CLI to sign. There is **no invoice
+database** because the chain is the record: the invoice, the name snapshot, the
+paid flag, and the `Paid` event are all on chain. There is **no API key** because
+the API never signs and never holds funds. The only keyed endpoint is
+`/v1/faucet`, which uses a Cloudflare secret for a dedicated testnet treasury and
+can only send fixed testnet amounts. Stats and the name directory read contract
+events; request telemetry is an optional Cloudflare KV binding, not an invoice
+store.
+
+## Try it in 60 seconds
+
+You do not need an account, an API key, or real money.
+
+1. Open the live demo: <https://ciro-a9s.pages.dev/#/demo>. It resolves to the
+   newest open **0.2 tUSD8** demo invoice for **Elena Rossi**.
+2. Connect a wallet on Aevum testnet (chain 44005). If the wallet is empty,
+   press **Get test funds**. Ciro sends **0.2 tUSD8 + 0.01 tQDAY** from its own
+   testnet treasury without leaving the site. If the treasury is empty, the page
+   links to the QDay Discord faucet first.
+3. Type **Elena Rossa**. The page says the name is close, shows no pay button,
+   and nothing moves.
+4. Type **Elena Rossi**. The Pay button appears with the locked 0.2 tUSD8 and
+   fee 0.
+5. Sign. The receipt shows the payer, payee, amount, transaction hash, and
+   `Verified on chain`.
+6. Read the same invoice at `/api/v1/invoices/<id>` and the receipt at
+   `/api/v1/receipts/<id>`; there is no key.
+7. Open <https://ciro-a9s.pages.dev/#/stats> and
+   <https://ciro-a9s.pages.dev/#/names> to see the payment and the name in the
+   public Control Room.
+
+To create your own invoice, connect a wallet, register a name (a claimed name
+shows available suggestions), create an invoice, and open its link in a second
+wallet.
+
 ## Reproduce it
 
 The README has the full quickstart, environment variables, and test commands.
@@ -220,10 +273,6 @@ npm install
 npm test
 cd contracts && forge test
 ```
-
-To use the live deployment, add Aevum testnet (chain 44005), claim tQDAY and
-tUSD8 from the QDay faucet, open <https://ciro-a9s.pages.dev>, connect a wallet,
-register a name, create an invoice, and open the pay link in a second wallet.
 
 ## Demo video
 
@@ -269,18 +318,21 @@ Key-material note: the repository has no real keys, `.env` files, or API keys. T
 
 - Aevum testnet only; no mainnet yet.
 - tUSD8 only in v1; no USDC/USDT.
-- ASCII-only name folding; duplicate names are allowed because a name is a
-  confirmation check, not a global identity.
+- ASCII-only name folding. The app keeps one current owner per folded name and
+  refuses a duplicate registration with suggestions. The v1 contract stores a
+  name per address but cannot enforce global uniqueness, so a direct contract
+  call can still duplicate one; v2 moves the rule on chain. The pay page and
+  receipt always show the payee address.
 - No cancel or void in v1; a mistyped invoice stays payable until due. v2 adds
   payee-only cancel/void.
-- The contract is immutable; a logic or fee change needs a new deployment.
+- The v1 contract is immutable; a logic or fee change needs a new deployment.
 - No fiat on-ramp, card, or bank payout.
-- No canonical ERC-8004 registry on Aevum at build time; the native registry is
-  the confirmation layer, with an adapter on the v2 roadmap.
+- No canonical ERC-8004 registry on Aevum at build time; the native confirmation
+  layer is implemented, with a v2 adapter planned.
 
 ## What is next
 
-The v2 plan covers the Control Room (public stats plus an internal operations
-console), account deletion, pause and suspension, the contract v2 items, the
-indexer, the fee, and the mainnet path:
+The Control Room, public name directory, and operations console are live. The v2
+plan covers on-chain name uniqueness, account deletion, pause and suspension, the
+contract v2 items, the indexer, the fee, and the mainnet path:
 [docs/product/V2_PLAN.md](../product/V2_PLAN.md).

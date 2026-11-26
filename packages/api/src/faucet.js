@@ -53,6 +53,77 @@ function amountFromEnv(env) {
   return value;
 }
 
+async function faucetTransfers(env, treasury, token) {
+  const base = (env.CIRO_FAUCET_EXPLORER_URL || env.CIRO_EXPLORER_URL || "").replace(/\/$/, "");
+  if (!base) return [];
+  try {
+    const url = `${base}/api?module=account&action=tokentx&address=${treasury}&contractaddress=${token}&page=1&offset=100&sort=desc`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return [];
+    const json = await response.json();
+    if (!Array.isArray(json.result)) return [];
+    const from = treasury.toLowerCase();
+    return json.result
+      .filter((tx) => String(tx.from).toLowerCase() === from)
+      .map((tx) => ({
+        to: getAddress(tx.to),
+        amount: BigInt(tx.value),
+        at: Number(tx.timeStamp) || 0,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// Read-only view of the faucet treasury for the public stats page and the
+// operations checks. It never signs and never returns the key.
+export async function faucetSnapshot(env) {
+  if (!env?.CIRO_FAUCET_KEY) return { configured: false, reason: "no_key" };
+  let account;
+  try {
+    account = privateKeyToAccount(env.CIRO_FAUCET_KEY);
+  } catch {
+    return { configured: false, reason: "bad_key" };
+  }
+  const chainId = Number(env.CIRO_FAUCET_CHAIN_ID ?? "44005");
+  const rpcUrl = env.CIRO_FAUCET_RPC_URL || env.CIRO_RPC_URL;
+  if (!rpcUrl) return { configured: false, reason: "no_rpc" };
+  const token = env.CIRO_FAUCET_TOKEN || TOKEN;
+  const chain = defineChain({
+    id: chainId,
+    name: chainId === 44005 ? "Aevum" : "Ciro local",
+    nativeCurrency: { name: "tQDAY", symbol: "tQDAY", decimals: 18 },
+    rpcUrls: { default: { http: [rpcUrl] } },
+  });
+  const client = createPublicClient({ chain, transport: http(rpcUrl, { timeout: 15_000 }) });
+  try {
+    const [tokenBalance, gasBalance, transfers] = await Promise.all([
+      client.readContract({ address: token, abi: TOKEN_ABI, functionName: "balanceOf", args: [account.address] }),
+      client.getBalance({ address: account.address }),
+      faucetTransfers(env, account.address, token),
+    ]);
+    const now = Math.floor(Date.now() / 1000);
+    const recent = transfers.filter((tx) => now - tx.at < ADDRESS_COOLDOWN_SECONDS);
+    const unique = new Set(recent.map((tx) => tx.to.toLowerCase()));
+    const latest = transfers.reduce((max, tx) => Math.max(max, tx.at), 0);
+    return {
+      configured: true,
+      treasury: getAddress(account.address),
+      token,
+      tokenAmount: amountFromEnv(env).toString(),
+      gasAmount: (env.CIRO_FAUCET_GAS_AMOUNT ? BigInt(env.CIRO_FAUCET_GAS_AMOUNT) : DEFAULT_GAS).toString(),
+      tokenBalance: tokenBalance.toString(),
+      gasBalance: gasBalance.toString(),
+      claims24h: recent.length,
+      uniqueClaimants24h: unique.size,
+      lastClaimAt: latest || null,
+      empty: tokenBalance < amountFromEnv(env),
+    };
+  } catch {
+    return { configured: false, reason: "chain_unavailable" };
+  }
+}
+
 export async function handleFaucet(env, body) {
   if (env.CIRO_FAUCET_DISABLED === "1") return result(503, { error: "faucet_offline" });
   if (!env.CIRO_FAUCET_KEY) return result(503, { error: "faucet_offline" });

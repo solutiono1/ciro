@@ -36,6 +36,7 @@ export function sentence(code) {
     chain_unavailable: "The chain did not answer.",
     chain_mismatch: "The API is on a different network than this page.",
     not_registered: "Register a name before creating an invoice.",
+    name_taken: "That name is already claimed on Ciro. Choose another name.",
     allowance_revoked: "That allowance is revoked.",
     cap_exceeded: "That allowance is used up.",
     bad_address: "Enter a valid wallet address.",

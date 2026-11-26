@@ -36,7 +36,7 @@ async function route(req, res, state) {
     send(res, result.status, result.body);
     return;
   }
-  const result = await handleRequest(state, req.method, url.pathname, body);
+  const result = await handleRequest(state, req.method, url.pathname, body, process.env);
   send(res, result.status, result.body);
 }
 

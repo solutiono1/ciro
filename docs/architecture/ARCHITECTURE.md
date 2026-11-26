@@ -82,7 +82,7 @@ The route list, the units, and the error codes are in `docs/architecture/INTEGRA
 
 Writes return `{ chainId, to, data, value, summary }` for the wallet or the CLI to sign. A close or unknown name on pay returns `name_mismatch` and no `data`. The API does not mark an invoice paid.
 
-There is no separate indexer process and no database. A receipt looks up the `Paid` log in chunks of at most 1,000 blocks. That limit is an Aevum behavior, recorded in the hackathon notes.
+There is no separate indexer process and no database. A receipt looks up the `Paid` log in chunks of at most 1,000 blocks. That limit is an Aevum behavior, recorded in the hackathon notes. The name directory and the public stats page read `Registered`, `InvoiceCreated`, and `Paid` events the same way. Request telemetry is an optional Cloudflare KV binding (`CIRO_STATS`); it stores one short-lived metadata row per request and never holds invoice data.
 
 ## Web app
 

@@ -29,10 +29,14 @@ Public:
 - `POST /v1/invoices/:id/check` `{ "name": "Elena Rossi" }` against the snapshot locked on that invoice. `pay` uses the snapshot. This route exists so a client can refuse the right name.
 - `GET /v1/payees/:address` → `{ "address", "registered", "name" }`. The name is public by design.
 - `GET /v1/payees/:address/invoices` — at most 100 invoices, with `truncated` if there are more.
+- `GET /v1/names` → every current name read from `Registered` events, with the folded name and registration time. No database.
+- `POST /v1/names/check` `{ "name", "address"? }` → `{ "folded", "available", "owner", "ownedByYou", "suggestions" }`. The app uses this before a registration.
+- `GET /v1/stats` → paid volume, invoice counts and conversion, time to pay, fee and take rate, users, faucet state, API telemetry, chain head, and indexer lag.
+- `GET /v1/diagnostics` → live checks for the API config, RPC, contract, token, explorer, faucet, index, and telemetry, each with a safe fix. No secrets.
 
 Prepare, unsigned:
 
-- `POST /v1/tx/register` `{ "name" }`
+- `POST /v1/tx/register` `{ "name", "address"? }` — returns 409 `name_taken` with `owner` and available `suggestions` when the folded name is already registered to another address. The app enforces one current owner per folded name; the v1 contract cannot enforce it on chain.
 - `POST /v1/tx/invoice` `{ "amount", "reference", "due" }`
 - `POST /v1/tx/pay` `{ "id", "name", "payer"? }`
 - `POST /v1/tx/pay-from-allowance` `{ "id", "name", "spender"? }`
@@ -54,7 +58,7 @@ When the snapshot is not an exact match, pay returns 409 `{ "error": "name_misma
 
 When `payer` or `spender` is sent, the success body may include `approvals`: zero or more unsigned `approve` transactions for the exact invoice amount. A non-zero but insufficient allowance is reset to zero first. The CLI sends those, waits, then sends the pay.
 
-Stable error codes include `bad_request`, `bad_address`, `bad_amount`, `bad_due`, `empty_name`, `unknown_invoice`, `not_paid`, `name_mismatch`, `already_paid`, `past_due`, `no_allowance`, `allowance_expired`, `allowance_revoked`, `cap_exceeded`, `chain_mismatch`, `chain_unavailable`, `not_found`.
+Stable error codes include `bad_request`, `bad_address`, `bad_amount`, `bad_due`, `empty_name`, `name_taken`, `unknown_invoice`, `not_paid`, `name_mismatch`, `already_paid`, `past_due`, `no_allowance`, `allowance_expired`, `allowance_revoked`, `cap_exceeded`, `chain_mismatch`, `chain_unavailable`, `not_found`.
 
 No private keys. No "we broadcast for you" in v1.
 

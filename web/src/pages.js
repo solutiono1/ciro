@@ -37,6 +37,7 @@ const NAV = [
   ["/history", "History", "history"],
   ["/wallet", "Wallet", "wallet"],
   ["/profile", "Profile", "profile"],
+  ["/ops", "Control Room", "chart"],
   ["/settings", "Settings", "settings"],
   ["/developers", "Developers", "developers"],
 ];
@@ -47,9 +48,12 @@ const TITLES = {
   "/history": "History",
   "/wallet": "Wallet",
   "/profile": "Profile",
+  "/ops": "Control Room",
   "/settings": "Settings",
   "/developers": "Developers",
   "/start": "Get started",
+  "/stats": "Stats",
+  "/names": "Names",
 };
 
 const ICONS = {
@@ -78,6 +82,7 @@ const ICONS = {
   globe: '<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M3 12h18"/><path d="M12 3c2.4 2.4 3.6 5.4 3.6 9S14.4 18.6 12 21c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/>',
   external: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  chart: '<path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 16v-5"/><path d="M13 16V7"/><path d="M18 16v-8"/>',
 };
 
 function icon(name, cls = "") {
@@ -99,6 +104,8 @@ function publicBar(withApp, minimal = false) {
     : `<nav class="pub-nav" aria-label="Site">
         <a href="#how">How it works</a>
         <a href="#faq">FAQ</a>
+        <a href="#/names">Names</a>
+        <a href="#/stats">Stats</a>
         <a href="#/docs">Docs</a>
       </nav>`;
   return `<header class="pub-bar">
@@ -133,6 +140,12 @@ function footer() {
           <a href="#/start">Open app</a>
           <button type="button" data-scroll="how">How it works</button>
           <button type="button" data-scroll="faq">FAQ</button>
+        </div>
+        <div class="foot-col">
+          <p class="foot-title">Control Room</p>
+          <a href="#/stats">Stats</a>
+          <a href="#/names">Names</a>
+          <a href="#/docs">API health</a>
         </div>
         <div class="foot-col">
           <p class="foot-title">Build</p>
@@ -178,6 +191,9 @@ function sheet() {
       <a href="#/wallet">${icon("wallet")}Wallet</a>
       <a href="#/profile">${icon("profile")}Profile</a>
       <a href="#/settings">${icon("settings")}Settings</a>
+      <a href="#/ops">${icon("chart")}Control Room</a>
+      <a href="#/stats">${icon("chart")}Public stats</a>
+      <a href="#/names">${icon("profile")}Names</a>
       <a href="#/developers">${icon("developers")}Developers</a>
       <button type="button" id="sheet-faucet">${icon("droplet")}<span>Get test tUSD8</span></button>
       <button class="close" type="button" data-close-sheet>${icon("close")}Close</button>
@@ -903,7 +919,7 @@ function registerBlock() {
     <div class="page-head">
       <p class="bracket">[ Your name ]</p>
       <h2 class="h2">Register your name</h2>
-      <p class="lede">This is the name a payer must type. It is shown folded before you sign. The name lives in the contract, so registering is one write and the wallet signs it. Gas is tQDAY on ${esc(chainName(session.meta?.chainId ?? 44005))}, not ETH on mainnet.</p>
+      <p class="lede">This is the name a payer must type. It is shown folded before you sign. One name can belong to one address here, so a claimed name shows suggestions instead. The name lives in the contract, so registering is one write and the wallet signs it. Gas is tQDAY on ${esc(chainName(session.meta?.chainId ?? 44005))}, not ETH on mainnet.</p>
     </div>
     <form id="register" class="card form">
       <div class="form-body">
@@ -911,10 +927,10 @@ function registerBlock() {
           <label class="label" for="name">Name</label>
           <input id="name" name="name" autocomplete="name" placeholder="Elena Rossi" />
         </div>
-        <p id="preview" class="label"></p>
+        ${nameStatusHtml()}
       </div>
       <div class="form-foot">
-        <button class="btn btn-primary" type="submit">Register ${arrow()}</button>
+        <button class="btn btn-primary" type="submit" disabled>Register ${arrow()}</button>
         <p id="form-error" class="bad"></p>
       </div>
     </form>
@@ -924,6 +940,97 @@ function registerBlock() {
 function formMessage(err) {
   if (err?.message === "bad_amount") return "Enter an amount like 100 or 100.50.";
   return err?.message || "The request failed.";
+}
+
+function nameStatusHtml() {
+  return `<div id="name-status" class="name-status" role="status" aria-live="polite"></div>
+        <div id="name-suggestions" class="name-suggestions"></div>`;
+}
+
+// Availability is an app rule on top of the v1 contract. The contract stores a
+// name per address; the directory makes the folded name unique for every
+// registration prepared here. v2 enforces the same rule on chain.
+function wireNameInput(input, submit) {
+  if (!input) return;
+  const status = document.querySelector("#name-status");
+  const suggestions = document.querySelector("#name-suggestions");
+  let timer = null;
+  let sequence = 0;
+
+  const setBusy = (message) => {
+    if (status) {
+      status.className = "name-status";
+      status.textContent = message;
+    }
+    if (suggestions) suggestions.innerHTML = "";
+    if (submit) submit.disabled = true;
+  };
+
+  const render = (data) => {
+    input.dataset.available = data.available ? "true" : "false";
+    if (!status) return;
+    if (data.available) {
+      status.className = "name-status good";
+      status.textContent = data.ownedByYou
+        ? "You own this name. Re-registering updates it."
+        : "Available. No one has claimed this name on Ciro.";
+      if (suggestions) suggestions.innerHTML = "";
+    } else {
+      status.className = "name-status bad";
+      status.innerHTML = `Name unavailable — already claimed${data.owner ? ` by <span class="mono">${esc(shortAddress(data.owner))}</span>` : ""}. Choose another name.`;
+      if (suggestions) {
+        suggestions.innerHTML = data.suggestions?.length
+          ? `<span class="name-suggest-label">Available instead:</span>${data.suggestions
+            .map((name) => `<button type="button" class="name-chip" data-name="${esc(name)}">${esc(name)}</button>`)
+            .join("")}`
+          : "";
+        suggestions.querySelectorAll(".name-chip").forEach((button) => {
+          button.addEventListener("click", () => {
+            input.value = button.dataset.name;
+            input.dispatchEvent(new Event("input"));
+          });
+        });
+      }
+    }
+    if (submit) submit.disabled = !data.available;
+  };
+
+  const check = async () => {
+    const value = input.value;
+    if (/[^\x20-\x7E]/.test(value)) {
+      setBusy("Use Latin letters, numbers, and spaces.");
+      return;
+    }
+    if (!foldedText(value)) {
+      setBusy("This name is empty once punctuation and extra spaces are removed.");
+      return;
+    }
+    const mine = ++sequence;
+    try {
+      const data = await api("POST", "/v1/names/check", {
+        name: value,
+        ...(session.account ? { address: session.account } : {}),
+      });
+      if (mine !== sequence) return;
+      render(data);
+    } catch (err) {
+      if (mine !== sequence) return;
+      setBusy(err.message || "Could not check that name.");
+      if (submit) submit.disabled = false;
+    }
+  };
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const folded = foldedText(input.value);
+    if (/[^\x20-\x7E]/.test(input.value)) {
+      setBusy("Use Latin letters, numbers, and spaces.");
+      return;
+    }
+    setBusy(folded ? `Stored as “${folded}”. Checking availability…` : "This name is empty once punctuation and extra spaces are removed.");
+    timer = setTimeout(check, 320);
+  });
+  if (input.value) check();
 }
 
 export function bindStart(go) {
@@ -961,16 +1068,7 @@ export function bindStart(go) {
   });
   const form = document.querySelector("#register");
   const input = document.querySelector("#name");
-  input?.addEventListener("input", () => {
-    if (/[^\x20-\x7E]/.test(input.value)) {
-      document.querySelector("#preview").textContent = "Use Latin letters, numbers, and spaces.";
-      return;
-    }
-    const folded = foldedText(input.value);
-    document.querySelector("#preview").textContent = folded
-      ? `Stored as “${folded}”. Capitals and extra spaces still match.`
-      : "This name is empty once punctuation and extra spaces are removed.";
-  });
+  wireNameInput(input, form?.querySelector('button[type="submit"]'));
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const error = document.querySelector("#form-error");
@@ -979,15 +1077,37 @@ export function bindStart(go) {
       error.textContent = "Use Latin letters, numbers, and spaces.";
       return;
     }
+    if (input.dataset.available === "false") {
+      error.textContent = "That name is already claimed. Choose one of the suggestions.";
+      return;
+    }
     try {
-      const tx = await api("POST", "/v1/tx/register", { name: input.value });
+      const tx = await api("POST", "/v1/tx/register", {
+        name: input.value,
+        ...(session.account ? { address: session.account } : {}),
+      });
       tx.expect = { kind: "register", name: input.value };
-      document.querySelector("#preview").textContent = tx.summary;
+      const status = document.querySelector("#name-status");
+      if (status) status.textContent = tx.summary;
       await broadcast([tx]);
       await loadPayee();
       location.hash = "#/dashboard";
     } catch (err) {
       error.textContent = formMessage(err);
+      if (err.code === "name_taken" && err.body?.suggestions?.length) {
+        const suggestions = document.querySelector("#name-suggestions");
+        if (suggestions) {
+          suggestions.innerHTML = `<span class="name-suggest-label">Available instead:</span>${err.body.suggestions
+            .map((name) => `<button type="button" class="name-chip" data-name="${esc(name)}">${esc(name)}</button>`)
+            .join("")}`;
+          suggestions.querySelectorAll(".name-chip").forEach((button) => {
+            button.addEventListener("click", () => {
+              input.value = button.dataset.name;
+              input.dispatchEvent(new Event("input"));
+            });
+          });
+        }
+      }
     }
   });
 }
@@ -1639,15 +1759,15 @@ export function profilePage() {
     </div>
     <p class="name">${esc(name)}</p>
     <p class="mono muted">${esc(session.account)}</p>
-    <p class="note mt-20">Open invoices keep the name they had when you created them. Paying one still requires that name. Changing the name signs register again.</p>
+    <p class="note mt-20">Open invoices keep the name they had when you created them. Paying one still requires that name. Changing the name signs register again. A folded name can belong to one address here, so a claimed name shows suggestions.</p>
     <form id="rename" class="card form mt-24">
       <div class="form-head"><p class="bracket">[ Change name ]</p></div>
       <div class="form-body">
-        <div class="field"><label class="label" for="name">New name</label><input id="name" /></div>
-        <p id="preview" class="label"></p>
+        <div class="field"><label class="label" for="name">New name</label><input id="name" value="${esc(session.payee?.registered ? session.payee.name : "")}" /></div>
+        ${nameStatusHtml()}
       </div>
       <div class="form-foot">
-        <button class="btn btn-primary" type="submit">Change name ${arrow()}</button>
+        <button class="btn btn-primary" type="submit" disabled>Change name ${arrow()}</button>
         <p id="form-error" class="bad"></p>
       </div>
     </form>
@@ -1655,24 +1775,25 @@ export function profilePage() {
 }
 
 export function bindProfile(go) {
+  const form = document.querySelector("#rename");
   const input = document.querySelector("#name");
-  input?.addEventListener("input", () => {
-    if (/[^\x20-\x7E]/.test(input.value)) {
-      document.querySelector("#preview").textContent = "Use Latin letters, numbers, and spaces.";
-      return;
-    }
-    const folded = foldedText(input.value);
-    document.querySelector("#preview").textContent = folded ? `Stored as “${folded}”.` : "This name is empty.";
-  });
-  document.querySelector("#rename")?.addEventListener("submit", async (event) => {
+  wireNameInput(input, form?.querySelector('button[type="submit"]'));
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const error = document.querySelector("#form-error");
     if (/[^\x20-\x7E]/.test(input.value)) {
       error.textContent = "Use Latin letters, numbers, and spaces.";
       return;
     }
+    if (input.dataset.available === "false") {
+      error.textContent = "That name is already claimed. Choose one of the suggestions.";
+      return;
+    }
     try {
-      const tx = await api("POST", "/v1/tx/register", { name: input.value });
+      const tx = await api("POST", "/v1/tx/register", {
+        name: input.value,
+        ...(session.account ? { address: session.account } : {}),
+      });
       tx.expect = { kind: "register", name: input.value };
       error.className = "muted";
       error.textContent = tx.summary;
@@ -1860,6 +1981,347 @@ export function bindDevelopers(go) {
     setEndpoints(document.querySelector("#api-url").value.trim(), document.querySelector("#rpc-url").value.trim());
     session.meta = null;
     await go();
+  });
+}
+
+/* Control Room */
+
+function pct(value) {
+  return `${(Number(value) * 100).toFixed(1)}%`;
+}
+
+function duration(seconds) {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return "—";
+  const total = Math.max(0, Math.round(Number(seconds)));
+  if (total < 60) return `${total}s`;
+  if (total < 3600) return `${Math.round(total / 60)}m`;
+  if (total < 86400) return `${(total / 3600).toFixed(1)}h`;
+  return `${(total / 86400).toFixed(1)}d`;
+}
+
+function ago(seconds) {
+  if (seconds == null) return "—";
+  const delta = Math.max(0, Math.round(Date.now() / 1000 - Number(seconds)));
+  return `${duration(delta)} ago`;
+}
+
+function metric(label, value, note = "") {
+  return `<div class="metric"><p class="metric-label">${esc(label)}</p><p class="metric-value">${esc(value)}</p>${note ? `<p class="metric-note">${esc(note)}</p>` : ""}</div>`;
+}
+
+function healthChip(level, label) {
+  return `<span class="health health-${esc(level)}">${esc(label)}</span>`;
+}
+
+function checkRow(check) {
+  return `<div class="check-row">
+    <span class="check-dot check-${esc(check.level)}" aria-hidden="true"></span>
+    <div class="check-main">
+      <p class="check-title">${esc(check.label)} ${healthChip(check.level, check.level)}</p>
+      <p class="check-detail">${esc(check.detail)}${check.ms != null ? ` · ${check.ms} ms` : ""}</p>
+      ${check.fix ? `<p class="check-fix">${esc(check.fix)}</p>` : ""}
+    </div>
+  </div>`;
+}
+
+function diagnosticsBlock(diag) {
+  if (!diag) return `<p class="empty">The diagnostics endpoint did not answer.</p>`;
+  return `<div class="card checks">${diag.checks.map(checkRow).join("")}</div>`;
+}
+
+function recentPaymentRows(payments) {
+  if (!payments?.length) return `<p class="empty">No payments yet.</p>`;
+  return `<ul class="card rows">${payments.map((payment) => `
+    <li><a class="row" href="#/receipt/${esc(payment.id)}">
+      <span class="row-main">
+        <span class="row-title">${esc(payment.amountDisplay)} tUSD8</span>
+        <span class="row-sub">invoice ${esc(payment.id)} · ${esc(shortAddress(payment.payer))} → ${esc(shortAddress(payment.payee))}</span>
+      </span>
+      <span class="row-meta"><span class="muted">${esc(payment.at ? ago(payment.at) : "")}</span></span>
+    </a></li>`).join("")}</ul>`;
+}
+
+export async function statsPage() {
+  const [stats, diag] = await Promise.all([
+    api("GET", "/v1/stats"),
+    api("GET", "/v1/diagnostics").catch(() => null),
+  ]);
+  const inv = stats.invoices;
+  const users = stats.users;
+  const faucet = stats.faucet;
+  const apiStats = stats.api;
+  const chain = stats.chain;
+  return publicShell(`
+    <main class="container docs pub-main">
+      <header class="docs-head">
+        <p class="bracket">[ Control Room ]</p>
+        <h1 class="h1">The state of Ciro.</h1>
+        <p class="lede">Paid volume, invoice conversion, names, faucet, and live health. Read from the chain and the API; there is no invoice database.</p>
+      </header>
+
+      <section class="metric-grid">
+        ${metric("Paid volume", `${inv.paidVolumeDisplay} tUSD8`, `${inv.paid} paid invoices`)}
+        ${metric("Invoices", String(inv.total), `${inv.open} open · ${inv.pastDue} past due`)}
+        ${metric("Paid conversion", pct(inv.conversion), `${inv.paid} of ${inv.total}`)}
+        ${metric("Registered names", String(users.total), `${users.new7d} new in 7 days`)}
+      </section>
+
+      <section class="stats-grid">
+        <div class="card card-pad">
+          <p class="bracket">[ Invoices ]</p>
+          <dl class="facts">
+            <div class="fact-row"><dt>Created</dt><dd>${inv.total}</dd></div>
+            <div class="fact-row"><dt>Paid</dt><dd>${inv.paid}</dd></div>
+            <div class="fact-row"><dt>Open</dt><dd>${inv.open}</dd></div>
+            <div class="fact-row"><dt>Past due</dt><dd>${inv.pastDue}</dd></div>
+            <div class="fact-row"><dt>Median time to pay</dt><dd>${duration(inv.medianSecondsToPay)}</dd></div>
+            <div class="fact-row"><dt>Average time to pay</dt><dd>${duration(inv.avgSecondsToPay)}</dd></div>
+          </dl>
+        </div>
+        <div class="card card-pad">
+          <p class="bracket">[ People ]</p>
+          <dl class="facts">
+            <div class="fact-row"><dt>Total registered</dt><dd>${users.total}</dd></div>
+            <div class="fact-row"><dt>New in 7 days</dt><dd>${users.new7d}</dd></div>
+            <div class="fact-row"><dt>New in 30 days</dt><dd>${users.new30d}</dd></div>
+            <div class="fact-row"><dt>Repeat payees</dt><dd>${users.repeatPayees}</dd></div>
+            <div class="fact-row"><dt>Unique payers</dt><dd>${users.uniquePayers}</dd></div>
+            <div class="fact-row"><dt>Fee revenue</dt><dd>${inv.feeDisplay} tUSD8</dd></div>
+          </dl>
+        </div>
+        <div class="card card-pad">
+          <p class="bracket">[ Faucet ]</p>
+          <dl class="facts">
+            <div class="fact-row"><dt>Status</dt><dd>${faucet.configured ? (faucet.empty ? "Empty" : "Ready") : "Not configured"}</dd></div>
+            <div class="fact-row"><dt>Token balance</dt><dd>${esc(faucet.tokenBalanceDisplay)} tUSD8</dd></div>
+            <div class="fact-row"><dt>Gas balance</dt><dd>${esc(faucet.gasBalanceDisplay)} tQDAY</dd></div>
+            <div class="fact-row"><dt>Claims in 24h</dt><dd>${faucet.claims24h ?? "—"}</dd></div>
+            <div class="fact-row"><dt>Unique claimants</dt><dd>${faucet.uniqueClaimants24h ?? "—"}</dd></div>
+            <div class="fact-row"><dt>Empty responses</dt><dd>${apiStats.configured ? `${apiStats.faucetEmpty} · ${pct(apiStats.faucetEmptyRate)}` : "—"}</dd></div>
+            <div class="fact-row"><dt>Treasury</dt><dd>${faucet.treasury ? `<span class="mono">${esc(shortAddress(faucet.treasury))}</span>` : "—"}</dd></div>
+          </dl>
+        </div>
+        <div class="card card-pad">
+          <p class="bracket">[ API · last ${apiStats.days ?? 2} days ]</p>
+          <dl class="facts">
+            <div class="fact-row"><dt>Requests</dt><dd>${apiStats.configured ? apiStats.requests : "Not configured"}</dd></div>
+            <div class="fact-row"><dt>Errors</dt><dd>${apiStats.configured ? apiStats.errors : "—"}</dd></div>
+            <div class="fact-row"><dt>Error rate</dt><dd>${apiStats.configured ? pct(apiStats.errorRate) : "—"}</dd></div>
+            <div class="fact-row"><dt>Average latency</dt><dd>${apiStats.configured ? `${apiStats.avgMs} ms` : "—"}</dd></div>
+            <div class="fact-row"><dt>p95 latency</dt><dd>${apiStats.configured ? `${apiStats.p95Ms} ms` : "—"}</dd></div>
+            <div class="fact-row"><dt>Wrong-name refusals</dt><dd>${apiStats.configured ? apiStats.wrongName : "—"}</dd></div>
+            <div class="fact-row"><dt>Failed payments</dt><dd>${apiStats.configured ? apiStats.failedPayments : "—"}</dd></div>
+          </dl>
+        </div>
+        <div class="card card-pad">
+          <p class="bracket">[ Keys and webhooks ]</p>
+          <dl class="facts">
+            <div class="fact-row"><dt>Invoice API keys</dt><dd>None in v1</dd></div>
+            <div class="fact-row"><dt>Reads</dt><dd>Keyless</dd></div>
+            <div class="fact-row"><dt>Writes</dt><dd>Unsigned tx</dd></div>
+            <div class="fact-row"><dt>Webhooks</dt><dd>v2</dd></div>
+            <div class="fact-row"><dt>Usage logs</dt><dd>${apiStats.configured ? `${apiStats.requests} requests` : "Not configured"}</dd></div>
+          </dl>
+          <p class="fineprint">The invoice API never signs and holds no funds, so it needs no key. The only keyed endpoint is the testnet faucet.</p>
+        </div>
+      </section>
+
+      <h2 class="h2 section-title">Live health</h2>
+      ${diagnosticsBlock(diag)}
+      <p class="fineprint">Chain ${esc(String(chain.chainId))} · block ${esc(chain.block)} · last event block ${esc(chain.lastEventBlock)} · index lag ${esc(String(chain.indexerLagBlocks))} blocks${chain.indexerLagSeconds != null ? ` · ${esc(ago(Math.floor(Date.now() / 1000) - chain.indexerLagSeconds))}` : ""}.</p>
+
+      <h2 class="h2 section-title">Recent payments</h2>
+      ${recentPaymentRows(stats.recent.payments)}
+      <div class="actions mt-24">
+        <button class="btn" type="button" id="stats-refresh">Refresh ${arrow()}</button>
+        <a class="btn" href="#/names">Browse names ${arrow()}</a>
+        <a class="btn" href="#/docs">API docs ${arrow()}</a>
+      </div>
+    </main>
+    ${footer()}
+  `, true);
+}
+
+export function bindStats(go) {
+  document.querySelector("#stats-refresh")?.addEventListener("click", () => go());
+}
+
+export async function namesPage() {
+  const data = await api("GET", "/v1/names");
+  return publicShell(`
+    <main class="container docs pub-main">
+      <header class="docs-head">
+        <p class="bracket">[ Names ]</p>
+        <h1 class="h1">Names registered on Ciro.</h1>
+        <p class="lede">A name is the check a payer types. The directory is read from the contract's <code>Registered</code> events. A folded name belongs to one address here, and a new registration is refused if the name is claimed.</p>
+      </header>
+      <form id="name-search" class="link-form card card-pad">
+        <label class="sr-only" for="name-query">Name</label>
+        <input id="name-query" placeholder="Check a name, for example Elena Rossi" autocomplete="off" />
+        <button class="btn btn-primary" type="submit">Check</button>
+      </form>
+      <p id="name-result" class="name-status mt-16" role="status" aria-live="polite"></p>
+      <h2 class="h2 section-title">${data.total} registered</h2>
+      <ul class="card rows" id="name-rows">
+        ${data.names.length ? data.names.map((row) => `
+          <li><a class="row" href="${esc(explorerAddress(row.address) || "#/names")}" ${explorerAddress(row.address) ? 'target="_blank" rel="noopener"' : ""}>
+            <span class="row-main">
+              <span class="row-title">${esc(row.name)}</span>
+              <span class="row-sub mono">${esc(row.address)}</span>
+            </span>
+            <span class="row-meta"><span class="muted">${row.registeredAt ? esc(ago(row.registeredAt)) : ""}</span></span>
+          </a></li>`).join("") : `<li class="empty">No names registered yet.</li>`}
+      </ul>
+      <div class="actions mt-24"><a class="btn btn-primary" href="#/start">Register a name ${arrow()}</a></div>
+    </main>
+    ${footer()}
+  `, true);
+}
+
+export function bindNames() {
+  const form = document.querySelector("#name-search");
+  const input = document.querySelector("#name-query");
+  const result = document.querySelector("#name-result");
+  const rows = document.querySelector("#name-rows");
+  const filter = () => {
+    if (!rows) return;
+    const query = input.value.trim().toLowerCase();
+    for (const row of rows.querySelectorAll("li")) {
+      const text = row.textContent.toLowerCase();
+      row.hidden = Boolean(query) && !text.includes(query);
+    }
+  };
+  input?.addEventListener("input", filter);
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!result) return;
+    result.className = "name-status mt-16";
+    result.textContent = "Checking…";
+    try {
+      const data = await api("POST", "/v1/names/check", { name: input.value });
+      if (data.available) {
+        result.className = "name-status good mt-16";
+        result.textContent = `“${data.folded}” is available. Register it to be paid under it.`;
+      } else {
+        result.className = "name-status bad mt-16";
+        const suggestionText = data.suggestions?.length
+          ? ` Available instead: ${data.suggestions.join(", ")}.`
+          : "";
+        result.innerHTML = `“${esc(data.folded)}” is claimed by <span class="mono">${esc(data.owner)}</span>.${esc(suggestionText)}`;
+      }
+    } catch (err) {
+      result.className = "name-status bad mt-16";
+      result.textContent = err.message || "Could not check that name.";
+    }
+  });
+}
+
+export async function opsPage() {
+  const [diag, stats] = await Promise.all([
+    api("GET", "/v1/diagnostics"),
+    api("GET", "/v1/stats").catch(() => null),
+  ]);
+  const meta = session.meta;
+  const apiErrors = stats?.api?.configured ? stats.api.recentErrors : [];
+  return frame(`
+    <div class="page-head">
+      <p class="bracket">[ Operations ]</p>
+      <h2 class="h2">Diagnose and fix.</h2>
+      <p class="lede">Live checks for the API, RPC, contract, token, explorer, faucet, and index. Every fix below is safe on testnet.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" type="button" id="ops-refresh">Run checks ${arrow()}</button>
+      <button class="btn" type="button" id="ops-copy">Copy support bundle</button>
+      <a class="btn" href="#/stats">Public stats ${arrow()}</a>
+    </div>
+    <p id="ops-status" class="fineprint" role="status"></p>
+    <h2 class="h2 section-title">Checks</h2>
+    ${diagnosticsBlock(diag)}
+    <h2 class="h2 section-title">Tools</h2>
+    <div class="card card-pad">
+      <dl class="facts">
+        <div class="fact-row"><dt>Wallet</dt><dd class="mono">${esc(session.account || "Not connected")}</dd></div>
+        <div class="fact-row"><dt>Network</dt><dd>${esc(chainName(meta?.chainId))}</dd></div>
+        <div class="fact-row"><dt>Contract</dt><dd class="mono">${esc(meta?.contract || "Not loaded")}</dd></div>
+        <div class="fact-row"><dt>Token</dt><dd class="mono">${esc(meta?.token || "Not loaded")}</dd></div>
+        <div class="fact-row"><dt>API</dt><dd class="mono">${esc(apiUrl())}</dd></div>
+        <div class="fact-row"><dt>RPC</dt><dd class="mono">${esc(rpcUrl())}</dd></div>
+      </dl>
+      <div class="actions mt-16">
+        <button class="btn" type="button" id="ops-add-network">Add Aevum</button>
+        <button class="btn" type="button" id="ops-switch">Switch network</button>
+        <button class="btn" type="button" id="ops-faucet">Get test funds</button>
+        <button class="btn" type="button" id="ops-disconnect">Disconnect wallet</button>
+        <button class="btn" type="button" id="ops-clear">Reset local settings</button>
+        <a class="btn" href="${esc(explorerAddress(meta?.contract) || "https://explorer-test.qday.info")}" target="_blank" rel="noopener">Open explorer ${icon("external", "ic-16")}</a>
+      </div>
+      <p id="ops-tool-status" class="fineprint" role="status"></p>
+    </div>
+    <h2 class="h2 section-title">Recent API errors</h2>
+    ${apiErrors.length ? `<ul class="card rows">${apiErrors.map((row) => `
+      <li class="row"><span class="row-main"><span class="row-title mono">${esc(row.method)} ${esc(row.path)}</span><span class="row-sub">${esc(row.error || "error")} · ${esc(String(row.status))} · ${esc(ago(Math.floor(row.at / 1000)))}</span></span></li>`).join("")}</ul>` : `<p class="empty">No recent errors${stats?.api?.configured ? "" : " (telemetry is not configured)"}.</p>`}
+    <p class="fineprint">API keys and webhooks are not in v1: reads are keyless and writes return an unsigned transaction. The v2 plan adds team keys, webhooks, and usage logs.</p>
+  `, "/ops");
+}
+
+export function bindOps(go) {
+  const status = document.querySelector("#ops-status");
+  const toolStatus = document.querySelector("#ops-tool-status");
+  document.querySelector("#ops-refresh")?.addEventListener("click", () => go());
+  document.querySelector("#ops-add-network")?.addEventListener("click", async () => {
+    if (toolStatus) toolStatus.textContent = "Asking the wallet to add Aevum…";
+    try {
+      await addNetwork();
+      if (toolStatus) toolStatus.textContent = "Aevum is in the wallet.";
+    } catch (err) {
+      if (toolStatus) toolStatus.textContent = err.message || "The wallet refused the network.";
+    }
+  });
+  document.querySelector("#ops-switch")?.addEventListener("click", async () => {
+    if (toolStatus) toolStatus.textContent = "Asking the wallet to switch…";
+    try {
+      await switchTo(session.meta?.chainId ?? 44005);
+      if (toolStatus) toolStatus.textContent = "Wallet switched. Reconnecting…";
+      await go();
+    } catch (err) {
+      if (toolStatus) toolStatus.textContent = err.message || "The wallet refused the switch.";
+    }
+  });
+  document.querySelector("#ops-faucet")?.addEventListener("click", async (event) => {
+    const ok = await requestTestToken(event.currentTarget, toolStatus);
+    if (ok) await go();
+  });
+  document.querySelector("#ops-disconnect")?.addEventListener("click", async () => {
+    await disconnect();
+    try {
+      sessionStorage.setItem("ciro.walletNotice", "Wallet disconnected from the operations console.");
+    } catch {
+      // The in-memory disconnect flag still applies.
+    }
+    location.hash = "#/start";
+  });
+  document.querySelector("#ops-clear")?.addEventListener("click", () => {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("ciro.")) localStorage.removeItem(key);
+    }
+    if (toolStatus) toolStatus.textContent = "Local Ciro settings cleared. The wallet connection is separate.";
+  });
+  document.querySelector("#ops-copy")?.addEventListener("click", async () => {
+    const bundle = {
+      generatedAt: new Date().toISOString(),
+      account: session.account,
+      meta: session.meta,
+      payee: session.payee,
+      diagnostics: await api("GET", "/v1/diagnostics").catch((err) => ({ error: err.message })),
+      stats: await api("GET", "/v1/stats").catch((err) => ({ error: err.message })),
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(bundle, null, 2));
+      if (status) status.textContent = "Support bundle copied. It contains no private key.";
+    } catch {
+      if (status) status.textContent = "The clipboard was refused. Open the browser console to copy the bundle.";
+      console.log(bundle);
+    }
   });
 }
 

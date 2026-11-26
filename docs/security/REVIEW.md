@@ -10,7 +10,7 @@ First review, 24 November 2026. Testnet only.
 - `web/src/{wallet,tx-guard,pages,session}.js`: the signing boundary, pay page, receipt page, and endpoint pinning.
 - Tests: `contracts/test/Ciro.t.sol`, `contracts/test/CiroAudit.t.sol`, `packages/api/test`, `web/test`, `web/e2e`.
 
-Out of scope: tUSD8 and the QDay chain, wallet extensions, Cloudflare and Railway hosting, DNS, and the browser itself.
+Out of scope: tUSD8 and the QDay chain, wallet extensions, Cloudflare hosting, DNS, and the browser itself.
 
 ## Deployment
 

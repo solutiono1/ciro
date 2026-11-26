@@ -92,8 +92,9 @@ unbounded arrays in the hot path.
 - One normalization function in Solidity and one in the shared package.
 - v2 either preserves non-ASCII bytes in the hash or rejects them on chain.
   The current "drop non-ASCII" rule is not allowed to diverge between clients.
-- Duplicate names remain allowed, because a name is a confirmation check, not a
-  global identity. The UI always shows the payee address next to the name.
+- v2 stores one owner per folded name hash and reverts `NameTaken` on a
+  duplicate. The v1 app already refuses duplicates; v2 closes the direct-contract
+  gap. The UI still shows the payee address next to the name.
 - A suspended or deactivated name cannot settle a new payment. The invoice's
   historical name remains visible on receipts.
 

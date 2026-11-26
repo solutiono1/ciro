@@ -5,12 +5,15 @@ import {
   bindCreate,
   bindDevelopers,
   bindLanding,
+  bindNames,
+  bindOps,
   bindPay,
   bindProfile,
   bindReceipt,
   bindSettings,
   bindShell,
   bindStart,
+  bindStats,
   bindWallet,
   bindDocs,
   dashboard,
@@ -21,12 +24,15 @@ import {
   invoicesPage,
   landing,
   loadPayee,
+  namesPage,
   newInvoice,
+  opsPage,
   payPage,
   profilePage,
   receiptPage,
   settingsPage,
   startPage,
+  statsPage,
   walletPage,
 } from "./pages.js";
 import { aevumDeployment, apiUrl, rpcUrl, session } from "./session.js";
@@ -99,6 +105,20 @@ async function go() {
       bindDocs();
       return;
     }
+    if (path === "/stats") {
+      await ensureMeta().catch(() => {});
+      if (mine !== ticket) return;
+      draw(await statsPage());
+      bindStats(go);
+      return;
+    }
+    if (path === "/names") {
+      await ensureMeta().catch(() => {});
+      if (mine !== ticket) return;
+      draw(await namesPage());
+      bindNames();
+      return;
+    }
     if (path === "/developers") {
       await ensureMeta().catch(() => {});
       if (mine !== ticket) return;
@@ -154,6 +174,11 @@ async function go() {
     if (path === "/dashboard") {
       draw(await dashboard());
       bindCopy();
+      return;
+    }
+    if (path === "/ops") {
+      draw(await opsPage());
+      bindOps(go);
       return;
     }
     if (path === "/invoices/new") {

@@ -21,7 +21,7 @@ The only exception is the separate testnet faucet endpoint. It holds a dedicated
 - A refused name reverts and leaves no payment event.
 - The registered display name is public. Registration is the payee publishing the name they want payers to match.
 - The allowance path can move the spender's tUSD8 only to the payee on that payee's invoices, up to the remaining cap, until expiry. It cannot transfer to an arbitrary address. The cap limits `payFromAllowance`, not a spender who chooses `pay` with its own wallet.
-- A name is a confirmation check, not a global identity. Two payees can register the same name, so the payee address is shown on the pay page and the receipt.
+- The app keeps one current owner per folded name and refuses a duplicate registration with suggestions. The v1 contract stores a name per address but cannot enforce that globally, so a direct contract call can still duplicate one. The pay page and receipt always show the payee address; v2 closes the gap on chain.
 - Non-ASCII names are rejected by the app and API. A direct contract call can still register one; the app refuses to pay an invoice whose stored name contains non-ASCII characters.
 - Fee basis points are set at deploy and capped in the constructor. The contest deploy uses zero.
 

@@ -21,6 +21,8 @@ import {
   txBody,
 } from "./chain.js";
 import { ApiError } from "./errors.js";
+import { computeDiagnostics, computeStats } from "./insights.js";
+import { checkName, nameList } from "./names.js";
 import { isoFromSeconds } from "./summary.js";
 import { feeOf, formatFee, formatUnits, parseBaseUnits } from "../../shared/src/money.js";
 import { isEmptyName } from "../../shared/src/normalize.js";
@@ -67,9 +69,9 @@ export function parseBody(text) {
 
 // Used by the Node server and the Cloudflare Pages Function. Both pass an
 // already parsed JSON object, so the core never touches a Node request.
-export async function handleRequest(state, method, path, body) {
+export async function handleRequest(state, method, path, body, env = null) {
   try {
-    return await dispatch(method, path, state, body);
+    return await dispatch(method, path, state, body, env);
   } catch (err) {
     if (err instanceof ApiError) {
       return { status: err.status, body: err.body() };
@@ -78,7 +80,7 @@ export async function handleRequest(state, method, path, body) {
   }
 }
 
-async function dispatch(method, path, state, body) {
+async function dispatch(method, path, state, body, env) {
   const invoice = path.match(/^\/v1\/invoices\/([1-9]\d{0,77})$/);
   const invoiceCheck = path.match(/^\/v1\/invoices\/([1-9]\d{0,77})\/check$/);
   const receipt = path.match(/^\/v1\/receipts\/([1-9]\d{0,77})$/);
@@ -88,6 +90,10 @@ async function dispatch(method, path, state, body) {
   const payee = path.match(/^\/v1\/payees\/(0x[0-9a-fA-F]{40})$/);
 
   if (method === "GET" && path === "/v1/meta") return { status: 200, body: await publicMeta(state) };
+  if (method === "GET" && path === "/v1/names") return { status: 200, body: await nameList(state) };
+  if (method === "POST" && path === "/v1/names/check") return postNameCheck(state, body);
+  if (method === "GET" && path === "/v1/stats") return { status: 200, body: await computeStats(state, env) };
+  if (method === "GET" && path === "/v1/diagnostics") return { status: 200, body: await computeDiagnostics(state, env) };
   if (method === "GET" && invoice) return getOneInvoice(state, parseId(invoice[1]));
   if (method === "POST" && invoiceCheck) return postInvoiceCheck(state, parseId(invoiceCheck[1]), body);
   if (method === "GET" && receipt) return getReceipt(state, parseId(receipt[1]));
@@ -185,10 +191,27 @@ async function postInvoiceCheck(state, id, body) {
   return { status: 200, body: { result } };
 }
 
+async function postNameCheck(state, body) {
+  const name = requireName(body.name, false);
+  const account = body.address === undefined || body.address === null ? null : requireAddress(body.address);
+  return { status: 200, body: await checkName(state, name, account) };
+}
+
 async function postRegister(state, body) {
   const name = requireName(body.name, false);
   if (isEmptyName(name)) throw new ApiError(400, "empty_name");
+  const account = body.address === undefined || body.address === null ? null : requireAddress(body.address);
+  const availability = await checkName(state, name, account);
+  if (!availability.available) {
+    throw new ApiError(409, "name_taken", {
+      owner: availability.owner,
+      suggestions: availability.suggestions,
+    });
+  }
   await loadMeta(state);
+  // The next availability check should see this attempt, even before the
+  // transaction is mined. The short cache is a convenience, not a lock.
+  state.nameCache = null;
   return { status: 200, body: txBody(state, encodeRegister(name), `Register "${name}"`) };
 }
 

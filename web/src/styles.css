@@ -1026,3 +1026,41 @@ code { background: var(--surface-inset); padding: 1px 5px; }
 .faucet-empty strong { color: var(--ink); }
 .faucet-empty .mono { word-break: break-all; }
 .faucet-empty code { font-size: 0.75rem; }
+
+/* Control Room: stats, names, and the operations console. */
+.metric-grid {
+  display: grid;
+  gap: 1px;
+  margin: 32px 0 24px;
+  border: 1px solid var(--hairline);
+  background: var(--hairline);
+}
+@media (min-width: 720px) { .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.metric { background: var(--surface); padding: 20px; }
+.metric-label { margin: 0; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.metric-value { margin: 8px 0 0; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.metric-note { margin: 4px 0 0; font-size: 0.8125rem; color: var(--muted); }
+.stats-grid { display: grid; gap: 16px; margin-top: 16px; }
+@media (min-width: 880px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.checks { display: block; }
+.check-row { display: flex; gap: 14px; padding: 16px 20px; }
+.check-row + .check-row { border-top: 1px solid var(--hairline); }
+.check-dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--subtle); }
+.check-ok { background: var(--success); }
+.check-warn { background: var(--warning); }
+.check-fail { background: var(--danger); }
+.check-main { min-width: 0; }
+.check-title { margin: 0; font-size: 0.9375rem; color: var(--ink); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.check-detail { margin: 4px 0 0; font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.check-fix { margin: 6px 0 0; font-size: 0.8125rem; color: var(--ink); line-height: 1.5; }
+.health { display: inline-flex; align-items: center; padding: 1px 7px; border: 1px solid var(--hairline); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.health-ok { color: var(--success); border-color: var(--success); }
+.health-warn { color: var(--warning); border-color: var(--warning); }
+.health-fail { color: var(--danger); border-color: var(--danger); }
+.name-status { margin-top: 10px; font-size: 0.875rem; line-height: 1.5; color: var(--muted); min-height: 1.4em; }
+.name-status.good { color: var(--success); }
+.name-status.bad { color: var(--danger); }
+.name-suggestions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.name-suggest-label { font-size: 0.8125rem; color: var(--muted); }
+.name-chip { border: 1px solid var(--hairline); background: var(--surface); color: var(--ink); padding: 5px 10px; font: inherit; font-size: 0.8125rem; cursor: pointer; }
+.name-chip:hover { border-color: var(--violet); color: var(--violet); }

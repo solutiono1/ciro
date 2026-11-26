@@ -24,6 +24,8 @@ Live on QDay Aevum testnet (chain 44005) · Ciro `0x4AceB37ecAce160B436311146002
 
 Try the open demo: [ciro-a9s.pages.dev/#/demo](https://ciro-a9s.pages.dev/#/demo). The link follows the newest open 0.2 tUSD8 demo invoice.
 
+The [Control Room](https://ciro-a9s.pages.dev/#/stats) shows paid volume, invoice conversion, registered names, faucet state, API latency, and live chain health. The [name directory](https://ciro-a9s.pages.dev/#/names) shows every registered name. Signed-in operators get the [operations console](https://ciro-a9s.pages.dev/#/ops) for diagnostics and safe fixes.
+
 The screenshots are from the live Aevum deployment (chain 44005). The transactions in the proof table are from it.
 
 ## Aevum Builder Challenge
@@ -245,7 +247,8 @@ Ops runbook: [docs/operations/FAUCET.md](docs/operations/FAUCET.md).
 | API | `CIRO_ADDRESS` | Ciro contract address. Required. |
 | API | `CIRO_CHAIN_ID` | Expected chain ID. Defaults to `44005`. |
 | API | `CIRO_START_BLOCK` | First block scanned for events. Defaults to `0`; set it to the deploy block on a long chain. |
-| API | `CIRO_EXPLORER_URL` | Optional Blockscout URL. When set, receipts and allowances use the explorer's indexed logs instead of one RPC call per 1,000 blocks. |
+| API | `CIRO_EXPLORER_URL` | Optional Blockscout URL. When set, receipts, names, and stats use the explorer's indexed logs instead of one RPC call per 1,000 blocks. |
+| API | `CIRO_STATS` | Optional Cloudflare KV binding. Stores short-lived request metadata (path, status, latency, error code) for the Control Room. It never stores invoice data; the API works without it. |
 | API | `PORT` | HTTP port. Defaults to `8787`. |
 | API | `HOST` | Bind address. Defaults to `127.0.0.1`; the container sets `0.0.0.0`. |
 | Web | `VITE_API_URL` | API base URL baked into the build. |
@@ -281,14 +284,16 @@ The close-name refusal is shown in the demo and covered by `CiroAudit.t.sol`; a 
 
 - tUSD8 has 6 decimals. The API and web format base units with that assumption.
 - Name folding is ASCII-only. Characters outside `a-z`, `0-9`, and spaces are dropped before matching. The app and API reject non-ASCII registrations; a direct contract call can still make one, and the app will not pay it.
-- A name is a confirmation check, not a global identity. Two payees can register the same name. Check the payee address on the invoice and the receipt.
+- A name is a confirmation check. The app keeps one current owner per folded name and refuses a duplicate registration with suggestions. The v1 contract stores a name per address but cannot enforce global uniqueness, so a direct contract call can still duplicate one; v2 moves the rule into the contract. The pay page and receipt always show the payee address.
+- Only a registered payee can create an invoice, so a payment always goes to a name registered on Ciro. The pay page checks the name snapshot stored on that invoice.
 - The allowance cap limits `payFromAllowance`. A spender can always pay with `pay` from its own wallet, so the cap is a budget control, not a hard wallet limit.
-- There is no cancel. An invoice stays payable until its due time; use a short due date for a typo.
+- There is no cancel or void in v1. An invoice stays payable until its due time; use a short due date for a typo. v2 adds payee-only cancel/void.
 - Invoice memos and payee names are public on chain.
 - Aevum tUSD8 has no public mint. The contract has no faucet. Ciro runs a separate small testnet faucet with a dedicated treasury; it sends a fixed tUSD8 and tQDAY amount from inside the app. If that treasury is empty, the app points to the QDay Discord faucet first, then shows the treasury address for voluntary testnet contributions.
 - Invoice and receipt lists cap at 100 rows. There is no indexer; the API scans contract events from `CIRO_START_BLOCK`.
-- The contract is immutable. A fee change or a logic change needs a new deployment.
-- The invoice API holds no key and no database. It can build a transaction, but it cannot sign or recover a payment. The testnet faucet is a separate endpoint with a dedicated testnet-only key.
+- The invoice API runs as a Cloudflare Pages Function. Reads call the RPC and return JSON; writes return an unsigned transaction. There is no database because the chain is the record, and no key because the API never signs. The only keyed endpoint is the separate testnet faucet.
+- The v1 contract is immutable. A fee change or a logic change needs a new deployment; the app-level name rule becomes an on-chain rule in v2.
+- A canonical ERC-8004 registry was not deployed on Aevum at build time. Ciro implements confirmation of payee natively (name hash, initials, word count, length, invoice snapshot, exact match). A v2 adapter reads the canonical registry when it exists.
 
 ## Roadmap
 

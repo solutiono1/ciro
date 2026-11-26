@@ -1,5 +1,6 @@
 import { createState, handleRequest, parseBody } from "../../packages/api/src/app.js";
 import { handleFaucet } from "../../packages/api/src/faucet.js";
+import { recordRequest } from "../../packages/api/src/telemetry.js";
 
 // Cloudflare Pages Function for /api/*. It runs the same core as the Node
 // server, with the state cached per isolate. No database, no key, no Railway.
@@ -19,6 +20,19 @@ function json(body, status) {
   });
 }
 
+function finish(context, request, path, started, status, body) {
+  const error = body && typeof body === "object" && typeof body.error === "string" ? body.error : null;
+  context.waitUntil(recordRequest(context.env, {
+    path,
+    method: request.method,
+    status,
+    ms: Date.now() - started,
+    error,
+    at: Date.now(),
+  }));
+  return json(body, status);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const method = request.method;
@@ -26,29 +40,32 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/api/, "") || "/";
+  const started = Date.now();
 
   let body = {};
   if (method === "POST") {
     const text = await request.text();
-    if (text.length > 32_768) return json({ error: "bad_request" }, 400);
+    if (text.length > 32_768) return finish(context, request, path, started, 400, { error: "bad_request" });
     try {
       body = parseBody(text);
     } catch {
-      return json({ error: "bad_request" }, 400);
+      return finish(context, request, path, started, 400, { error: "bad_request" });
     }
   }
 
   if (path === "/v1/faucet" && method === "POST") {
     try {
       const result = await handleFaucet(env, body);
-      return json(result.body, result.status);
+      return finish(context, request, path, started, result.status, result.body);
     } catch {
-      return json({ error: "faucet_failed" }, 502);
+      return finish(context, request, path, started, 502, { error: "faucet_failed" });
     }
   }
 
   if (!state) {
-    if (!env.CIRO_RPC_URL || !env.CIRO_ADDRESS) return json({ error: "chain_unavailable" }, 502);
+    if (!env.CIRO_RPC_URL || !env.CIRO_ADDRESS) {
+      return finish(context, request, path, started, 502, { error: "chain_unavailable" });
+    }
     try {
       state = createState({
         rpcUrl: env.CIRO_RPC_URL,
@@ -58,10 +75,10 @@ export async function onRequest(context) {
         explorerUrl: env.CIRO_EXPLORER_URL ?? "",
       });
     } catch {
-      return json({ error: "chain_unavailable" }, 502);
+      return finish(context, request, path, started, 502, { error: "chain_unavailable" });
     }
   }
 
-  const result = await handleRequest(state, method, path, body);
-  return json(result.body, result.status);
+  const result = await handleRequest(state, method, path, body, env);
+  return finish(context, request, path, started, result.status, result.body);
 }
