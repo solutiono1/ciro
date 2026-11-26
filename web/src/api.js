@@ -1,13 +1,13 @@
 import { apiUrl } from "./session.js";
 
-export async function api(method, path, body) {
+async function requestOnce(method, path, body, timeout) {
   let response;
   try {
     response = await fetch(`${apiUrl()}${path}`, {
       method,
       headers: body ? { "content-type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(timeout),
     });
   } catch {
     throw Object.assign(new Error("The Ciro API is not reachable."), { code: "offline" });
@@ -20,6 +20,21 @@ export async function api(method, path, body) {
     throw error;
   }
   return json;
+}
+
+export async function api(method, path, body) {
+  // The Aevum testnet RPC and explorer can be slow. A read gets one retry on a
+  // network error; a write never retries because it may already have landed.
+  const timeout = path === "/v1/faucet" ? 60_000 : 20_000;
+  try {
+    return await requestOnce(method, path, body, timeout);
+  } catch (err) {
+    if (method === "GET" && err.code === "offline") {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return requestOnce(method, path, body, timeout);
+    }
+    throw err;
+  }
 }
 
 export function sentence(code) {

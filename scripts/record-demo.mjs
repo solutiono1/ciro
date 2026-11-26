@@ -168,7 +168,7 @@ try {
   await click(page, page.getByRole("link", { name: "Get started" }));
   await click(page, page.getByRole("button", { name: "Connect" }));
   await click(page, page.locator("#name"));
-  await page.locator("#name").fill("Ada Okonkwo");
+  await page.locator("#name").fill("Elena Rossi");
   await page.waitForFunction(() => document.querySelector("#preview")?.textContent?.includes("ada okonkwo"));
   await click(page, page.getByRole("button", { name: "Register" }));
   await page.getByRole("heading", { name: "Open invoices" }).waitFor();
@@ -179,7 +179,7 @@ try {
   await page.getByRole("heading", { name: "Invoices" }).waitFor();
   await click(page, page.getByRole("link", { name: "New invoice" }));
   await click(page, page.locator("#amount"));
-  await page.locator("#amount").fill("1");
+  await page.locator("#amount").fill("0.2");
   await page.locator("#reference").fill("March design");
   await page.locator("#due").fill("2026-12-31");
   await click(page, page.getByRole("button", { name: "Create invoice" }));
@@ -191,7 +191,7 @@ try {
   await click(page, page.getByRole("link", { name: "Open pay screen" }));
   await page.getByLabel("Name you were told").waitFor();
   await click(page, page.locator("#claimed"));
-  await page.locator("#claimed").fill("Ada Okonkwa");
+  await page.locator("#claimed").fill("Elena Rossa");
   await page.getByText("This is close to the name on the invoice.").waitFor();
   await sleep(800);
 
@@ -199,8 +199,8 @@ try {
   await page.evaluate(() => window.__ciroE2E.setAccount(1));
   await page.waitForFunction(() => document.querySelector("#claimed")?.value === "");
   await click(page, page.locator("#claimed"));
-  await page.locator("#claimed").fill("Ada Okonkwo");
-  const pay = page.getByRole("button", { name: "Pay 1.000000 tUSD8" });
+  await page.locator("#claimed").fill("Elena Rossi");
+  const pay = page.getByRole("button", { name: "Pay 0.200000 tUSD8" });
   await pay.waitFor();
   await click(page, pay);
   await page.getByText("Receipt 1").waitFor();

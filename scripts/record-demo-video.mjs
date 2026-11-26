@@ -1,6 +1,7 @@
 // Records the real Ciro site with real Aevum testnet transactions and no audio.
-// The payee is an ephemeral testnet key created for this recording. The payer is
-// the deployer in .deploy-key, which funds the payee for gas before recording.
+// The payee is the demo payee in .demo-payee-key*, already registered as
+// Elena Rossi. The payer is the deployer in .deploy-key. Fund the payer with one
+// 0.2 tUSD8 faucet claim before recording.
 //
 // Usage, from the repo root:
 //   node scripts/record-demo-video.mjs
@@ -11,8 +12,9 @@
 //   demo/video-cues.json
 //
 // The site is the live original at https://ciro-a9s.pages.dev. The recording is
-// silent and contains a real cursor, a close-name refusal, an exact payment, and
-// the on-chain receipt. No AI video, no generated UI.
+// silent and contains a real cursor, a taken-name refusal, a close-name
+// refusal, an exact payment, the on-chain receipt, and the Control Room.
+// No AI video, no generated UI.
 
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, rm, copyFile, writeFile } from "node:fs/promises";
@@ -28,7 +30,7 @@ import {
   parseAbi,
   parseEther,
 } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { SCENES } from "./demo-timeline.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -54,8 +56,27 @@ const tokenAbi = parseAbi(["function balanceOf(address) view returns (uint256)"]
 
 const payerKey = (await readFile(path.join(root, ".deploy-key"), "utf8")).trim();
 if (!/^0x[0-9a-fA-F]{64}$/.test(payerKey)) throw new Error("no valid .deploy-key found");
+
+async function demoPayeeKey() {
+  if (process.env.CIRO_DEMO_PAYEE_KEY && /^0x[0-9a-fA-F]{64}$/.test(process.env.CIRO_DEMO_PAYEE_KEY.trim())) {
+    return process.env.CIRO_DEMO_PAYEE_KEY.trim();
+  }
+  const files = (await readdir(root)).filter((name) => name.startsWith(".demo-payee-key"));
+  for (const file of files) {
+    const key = (await readFile(path.join(root, file), "utf8")).trim();
+    if (/^0x[0-9a-fA-F]{64}$/.test(key)) return key;
+  }
+  throw new Error("no .demo-payee-key* found; set CIRO_DEMO_PAYEE_KEY to the demo payee key");
+}
+
+const NAME = "Elena Rossi";
+const CLOSE_NAME = "Elena Rossa";
+const AMOUNT = "0.2";
+const REFERENCE = "Studio deposit";
+const DUE = "2028-12-31";
+
 const payer = privateKeyToAccount(payerKey);
-const payee = privateKeyToAccount(generatePrivateKey());
+const payee = privateKeyToAccount(await demoPayeeKey());
 const payerWallet = createWalletClient({ account: payer, chain, transport });
 const payeeWallet = createWalletClient({ account: payee, chain, transport });
 
@@ -70,12 +91,12 @@ async function ensureFunds() {
     functionName: "balanceOf",
     args: [payer.address],
   });
-  if (payerToken < 1_000_000n) {
-    throw new Error(`payer needs at least 1.0 tUSD8, has ${payerToken} base units`);
+  if (payerToken < 200_000n) {
+    throw new Error(`payer needs at least 0.2 tUSD8, has ${payerToken} base units`);
   }
   const payeeGas = await publicClient.getBalance({ address: payee.address });
-  if (payeeGas < parseEther("0.03")) {
-    const hash = await payerWallet.sendTransaction({ to: payee.address, value: parseEther("0.1") });
+  if (payeeGas < parseEther("0.003")) {
+    const hash = await payerWallet.sendTransaction({ to: payee.address, value: parseEther("0.005") });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") throw new Error("payee gas funding reverted");
   }
@@ -240,18 +261,32 @@ try {
   await click(page.getByRole("link", { name: "Get started" }));
   await page.getByRole("button", { name: "Connect" }).waitFor();
   await click(page.getByRole("button", { name: "Connect" }));
+  await page.locator('.side a[href="#/profile"]').waitFor();
+  await click(page.locator('.side a[href="#/profile"]'));
   await page.locator("#name").waitFor();
-  await fill(page.locator("#name"), "Ada Okonkwo");
-  await click(page.getByRole("button", { name: "Register" }));
-  await page.getByRole("heading", { name: "Open invoices" }).waitFor();
+  // Show the app-level name rule first: a taken name is refused with
+  // available suggestions. Then re-register the demo name, which this address
+  // already owns, so the registration transaction is real.
+  await fill(page.locator("#name"), "solution kanu");
+  await page.getByText("Name unavailable").waitFor();
+  await sleep(2400);
+  await fill(page.locator("#name"), NAME);
+  await page.getByText("You own this name").waitFor();
+  await page.waitForFunction(() => {
+    const button = document.querySelector('#rename button[type="submit"]');
+    return Boolean(button && !button.disabled);
+  });
+  await click(page.getByRole("button", { name: "Change name" }));
+  await sleep(4500);
   await holdTo(20);
 
   begin("create");
-  await click(page.getByRole("link", { name: "New invoice" }));
+  await page.locator('.side a[href="#/invoices/new"]').waitFor();
+  await click(page.locator('.side a[href="#/invoices/new"]'));
   await page.locator("#amount").waitFor();
-  await fill(page.locator("#amount"), "1");
-  await fill(page.locator("#reference"), "Studio deposit");
-  await fill(page.locator("#due"), "2026-12-31");
+  await fill(page.locator("#amount"), AMOUNT);
+  await fill(page.locator("#reference"), REFERENCE);
+  await fill(page.locator("#due"), DUE);
   await click(page.getByRole("button", { name: "Create invoice" }));
   await page.getByRole("link", { name: "Open pay screen" }).waitFor();
   process.stdout.write(`invoice ${page.url()}\n`);
@@ -263,12 +298,12 @@ try {
   await page.getByRole("link", { name: "Open pay screen" }).waitFor();
   await click(page.getByRole("link", { name: "Open pay screen" }));
   await page.getByLabel("Name you were told").waitFor();
-  await fill(page.locator("#claimed"), "Ada Okonkwa");
+  await fill(page.locator("#claimed"), CLOSE_NAME);
   await page.getByText("This is close to the name on the invoice.").waitFor();
   await holdTo(26);
 
   begin("pay");
-  await fill(page.locator("#claimed"), "Ada Okonkwo");
+  await fill(page.locator("#claimed"), NAME);
   await page.getByText("The name matches.").waitFor();
   const pay = page.getByRole("button", { name: /^Pay / });
   await pay.waitFor();
@@ -295,7 +330,14 @@ try {
   await page.goto(`${origin}/#/developers`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: "Build on Ciro" }).waitFor();
   await page.getByText("@getciro/sdk").first().scrollIntoViewIfNeeded();
-  await sleep(900);
+  await sleep(2200);
+  await page.goto(`${origin}/#/stats`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: "The state of Ciro." }).waitFor();
+  await page.getByText("Live health").scrollIntoViewIfNeeded();
+  await sleep(2600);
+  await page.goto(`${origin}/#/names`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: "Names registered on Ciro." }).waitFor();
+  await sleep(2200);
   await holdTo(28);
 } finally {
   await context.close();

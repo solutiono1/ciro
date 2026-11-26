@@ -125,7 +125,7 @@ try {
   await click(page, page.getByRole("link", { name: "Invoices" }));
   await click(page, page.getByRole("link", { name: "New invoice" }));
   await click(page, page.locator("#amount"));
-  await page.locator("#amount").fill("1");
+  await page.locator("#amount").fill("0.2");
   await page.locator("#reference").fill("Studio deposit");
   await page.locator("#due").fill(due);
   await click(page, page.getByRole("button", { name: "Create invoice" }));
@@ -135,7 +135,7 @@ try {
   await click(page, page.getByRole("link", { name: "Open pay screen" }));
   await page.getByLabel("Name you were told").waitFor();
   await click(page, page.locator("#claimed"));
-  await page.locator("#claimed").fill("Ada Okonkwo");
+  await page.locator("#claimed").fill("Elena Rossi");
   const pay = page.getByRole("button", { name: /^Pay / });
   await pay.waitFor();
   await sleep(900);

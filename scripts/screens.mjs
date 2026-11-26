@@ -120,13 +120,13 @@ try {
 
   await page.getByRole("link", { name: "Get started" }).click();
   await page.getByRole("button", { name: "Connect" }).click();
-  await page.locator("#name").fill("Ada Okonkwo");
+  await page.locator("#name").fill("Elena Rossi");
   await page.getByRole("button", { name: "Register" }).click();
   await page.getByRole("heading", { name: "Open invoices" }).waitFor();
 
   await page.getByRole("link", { name: "Invoices" }).click();
   await page.getByRole("link", { name: "New invoice" }).click();
-  await page.locator("#amount").fill("1");
+  await page.locator("#amount").fill("0.2");
   await page.locator("#reference").fill("March design");
   await page.locator("#due").fill("2026-12-31");
   await page.getByRole("button", { name: "Create invoice" }).click();
@@ -143,12 +143,12 @@ try {
   await page.getByLabel("Name you were told").waitFor();
   await page.evaluate(() => window.__ciroE2E.setAccount(1));
   await page.waitForFunction(() => document.querySelector("#claimed")?.value === "");
-  await page.locator("#claimed").fill("Ada Okonkwo");
-  await page.getByRole("button", { name: "Pay 1.000000 tUSD8" }).waitFor();
+  await page.locator("#claimed").fill("Elena Rossi");
+  await page.getByRole("button", { name: "Pay 0.200000 tUSD8" }).waitFor();
   await sleep(500);
   await shot("pay");
 
-  await page.getByRole("button", { name: "Pay 1.000000 tUSD8" }).click();
+  await page.getByRole("button", { name: "Pay 0.200000 tUSD8" }).click();
   await page.getByText("Receipt 1").waitFor();
   await sleep(700);
   await shot("receipt");

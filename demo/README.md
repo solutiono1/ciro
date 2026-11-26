@@ -30,15 +30,15 @@ node scripts/record-demo-video.mjs
 This records the live site at `https://ciro-a9s.pages.dev`, not a mockup:
 
 - 1440x810, 30 fps, no audio.
-- A fresh ephemeral payee key is created in memory and funded with tQDAY from
-  the deployer for gas.
-- The deployer in `.deploy-key` is the payer. It needs at least 1.0 tUSD8 and
-  gas for the payment.
-- The payee registers `Elena Rossi`, creates a 1.0 tUSD8 invoice, switches to the
-  payer, types a close name, shows no pay button, then the exact name, pays, and
-  opens the verified receipt.
-- The final scene shows the public developers page with the published API, CLI,
-  MCP, and SDK.
+- The demo payee in `.demo-payee-key*` is already registered as **Elena Rossi**.
+- The deployer in `.deploy-key` is the payer. It needs at least **0.2 tUSD8**
+  (one faucet claim) and gas for the payment.
+- The payee shows the taken-name refusal with suggestions, re-registers
+  **Elena Rossi**, creates a **0.2 tUSD8** invoice, switches to the payer, types
+  the close name **Elena Rossa** and shows no pay button, then types the exact
+  name, pays, and opens the verified receipt.
+- The final scene shows the public developers page, the Control Room stats, and
+  the public name directory.
 
 Outputs:
 
