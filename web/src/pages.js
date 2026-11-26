@@ -450,7 +450,7 @@ export function landing() {
             <a class="btn btn-primary btn-lg" href="#/start"><span>Get started</span>${arrow()}</a>
             <button class="btn btn-lg" type="button" data-scroll="lookup"><span>I have a link</span>${arrow()}</button>
           </div>
-          <p class="fineprint hero-note">New to Aevum? <a href="#/pay/11">See a live invoice</a> first.</p>
+          <p class="fineprint hero-note">New to Aevum? <a href="#/demo">See a live invoice</a> first.</p>
         </div>
       </section>
       ${appStage()}
@@ -823,7 +823,7 @@ function onboardingHelp() {
     <p class="lede">You need tQDAY for gas and tUSD8 to pay. Both are free on testnet. Connect, then use Get test tUSD8 in the app. You can also look at a live invoice without a wallet.</p>
     <div class="actions">
       ${walletAction}
-      <a class="btn" href="#/pay/11">See a live invoice ${arrow()}</a>
+      <a class="btn" href="#/demo">See a live invoice ${arrow()}</a>
     </div>
     <p id="start-status" class="fineprint" role="status"></p>
   </div>`;

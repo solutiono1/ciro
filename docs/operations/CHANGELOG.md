@@ -9,6 +9,9 @@
 - An explicit wallet disconnect now persists across navigation and reloads; navigation cannot reattach the old account. Wallet-side empty-account events are treated as a disconnect.
 - Replaced the landing clip with the supplied backed export, used byte-for-byte.
 - Rotated the public demo invoice to 0.2 tUSD8 so it matches the faucet amount.
+- Added `#/demo`, which resolves to the newest open 0.2 tUSD8 demo invoice instead of a fixed number. Invoice 12 is the rotation reserve.
+- Added `scripts/faucet-monitor.mjs` and a scheduled workflow that alerts when the treasury drops below three claims or 0.02 tQDAY, or the live endpoint is unhealthy.
+- Documented the open v1 invoices and the v2 cancellation migration in `docs/operations/TEST-DATA.md`.
 - Added the faucet runbook and the v1 growth backlog.
 
 ## 2026-11-23 - Deployment, landing, and public docs

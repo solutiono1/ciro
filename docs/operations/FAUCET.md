@@ -58,34 +58,53 @@ this exception.
 
 ## Demo invoice rotation
 
-The public “See a live invoice” link points to an open **0.2 tUSD8** invoice
-(invoice 11) so it matches the faucet amount. If it is paid, it becomes a
-receipt and the onboarding link loses the pay screen.
+The public “See a live invoice” link is `#/demo`. It resolves at runtime to the
+newest **open 0.2 tUSD8** invoice whose reference is `Demo invoice` and whose
+payee is the demo account `0xF69e…498C`. Paying one demo invoice does not turn
+the onboarding link into a receipt; the route moves to the next open one.
 
-To rotate:
+There are two demo invoices, **11** and **12**, both open and both 0.2 tUSD8.
+Invoice 12 is the rotation reserve. Both expire on their due dates, so add a new
+one before the last open invoice is paid or expires:
 
-1. Create a new 0.2 tUSD8 invoice from the demo payee.
-2. Update the two `#/pay/10` / `#/pay/11` links in `web/src/pages.js`, the README,
-   and the submission copy.
-3. Rebuild and deploy.
-4. Check the landing “See a live invoice” link in a logged-out browser.
+1. From the demo payee, create a 0.2 tUSD8 invoice with reference
+   `Demo invoice` and a due date at least a year out.
+2. Do not change the web link; `#/demo` picks it up.
+3. Confirm `#/demo` in a logged-out browser lands on a pay screen, not a
+   receipt.
+4. Check the payer qualifies for the faucet (0 tUSD8) if the demo is meant to
+   be claimed and paid end to end.
 
-v1 cannot cancel the old invoice; it stays open until its due date. That is
-acceptable testnet data.
+v1 cannot cancel the old invoices; they stay open until their due dates. That is
+acceptable testnet data. See [TEST-DATA.md](TEST-DATA.md).
 
 ## Monitoring
 
-Watch:
+`node scripts/faucet-monitor.mjs` checks the treasury and the live endpoint.
+It exits 0 when healthy, 1 when the balance is low or the endpoint is unhealthy,
+and 2 when the check itself fails.
 
-- treasury tUSD8 balance,
-- treasury tQDAY balance,
-- `faucet_empty` rate,
-- `faucet_failed` rate,
-- explorer latency/errors for the claim-history check,
-- claims per address/IP.
+Defaults:
 
-Add these to the v2 Control Room with an empty-treasury alert. For now, a manual
-weekly check is enough.
+- alert below **3 claims** (0.6 tUSD8),
+- alert below **0.02 tQDAY** for gas,
+- the endpoint must answer `already_funded` for the treasury address.
+
+The scheduled GitHub Action `.github/workflows/faucet-monitor.yml` runs every
+six hours and on demand. A failing run notifies the repository owner by email;
+the job summary shows the balances. To check by hand:
+
+```bash
+node scripts/faucet-monitor.mjs
+node scripts/faucet-monitor.mjs --json
+```
+
+`CIRO_MONITOR_MIN_CLAIMS`, `CIRO_MONITOR_MIN_GAS`, `CIRO_FAUCET_ADDRESS`, and
+`CIRO_RPC_URL` override the defaults. The monitor needs no secret.
+
+Also watch `faucet_empty` and `faucet_failed` rates and explorer errors for the
+claim-history check. Add them to the v2 Control Room with an empty-treasury
+alert. Until then, the scheduled monitor is the alert.
 
 ## Common failures
 

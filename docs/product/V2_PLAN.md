@@ -28,7 +28,7 @@ These come from [REVIEW.md](../security/REVIEW.md) and the README's known limits
 
 | Item | Why it matters | v2 direction |
 |---|---|---|
-| No cancel or void | A typo stays payable until due | Payee-only `cancel(id)` while open; paid receipts are immutable |
+| No cancel or void | A typo stays payable until due | Payee-only `cancel(id)` while open; paid receipts are immutable. The v1 invoices that stay open are listed in [TEST-DATA.md](../operations/TEST-DATA.md). |
 | `InvoiceCreated` has no name snapshot | A log-only indexer cannot show the name | Emit the folded name hash and display name, or an indexed snapshot |
 | `paidAt = 0` sentinel | A block timestamp of zero looks unpaid | Separate `paid` flag or a non-colliding sentinel |
 | ASCII-only folding | Non-ASCII names can be registered directly on chain | Preserve bytes or reject on chain; one canonical rule shared by contract and API |

@@ -18,6 +18,7 @@ Public documentation for Ciro: what it is, how it works, and how to build on it.
 
 - [Changelog](operations/CHANGELOG.md) — notable changes.
 - [Faucet runbook](operations/FAUCET.md) — treasury, limits, refill, and rotation.
+- [Test data](operations/TEST-DATA.md) — open v1 invoices and the v2 cancel migration.
 
 ## Growth
 

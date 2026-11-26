@@ -30,6 +30,7 @@ import {
   walletPage,
 } from "./pages.js";
 import { aevumDeployment, apiUrl, rpcUrl, session } from "./session.js";
+import { DEMO_PAYEE, pickDemoInvoice } from "./demo.js";
 import { refreshWallet } from "./wallet.js";
 
 const app = document.querySelector("#app");
@@ -64,11 +65,25 @@ async function ensureMeta() {
 
 async function go() {
   const mine = ++ticket;
-  const path = (location.hash.replace(/^#/, "") || "/").split("?")[0];
-  const parts = path.split("/").filter(Boolean);
+  let path = (location.hash.replace(/^#/, "") || "/").split("?")[0];
+  let parts = path.split("/").filter(Boolean);
   try {
     await refreshWallet();
     if (mine !== ticket) return;
+    if (path === "/demo") {
+      // The public demo link points at this route, not a fixed invoice. It
+      // follows the newest open 0.2 tUSD8 "Demo invoice", so paying the demo
+      // does not turn the onboarding link into a receipt.
+      await ensureMeta();
+      const { invoices } = await api("GET", `/v1/payees/${DEMO_PAYEE}/invoices`);
+      const demo = pickDemoInvoice(invoices);
+      if (!demo) {
+        throw new Error("No open demo invoice is available right now. Create an invoice to try the flow.");
+      }
+      path = `/pay/${demo.id}`;
+      parts = ["pay", demo.id];
+      history.replaceState(null, "", `#/pay/${demo.id}`);
+    }
     if (path === "/history") {
       void loadPayee().catch(() => {});
       void ensureMeta().catch(() => {});
