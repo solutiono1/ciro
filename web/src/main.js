@@ -175,6 +175,10 @@ async function go() {
       return;
     }
     if (path === "/ops") {
+      if (!session.account) {
+        location.hash = "#/start";
+        return;
+      }
       draw(await opsPage());
       bindOps(go);
       return;
